@@ -1,0 +1,93 @@
+@page "/"
+@inject NavigationManager Navigation
+
+<PageTitle>Spin the Wheel</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title mb-3">Add your items</h2>
+
+                <div class="mb-3">
+                    <label for="itemsInput" class="form-label">
+                        Enter one item per line:
+                    </label>
+                    <textarea @bind="itemsText"
+                              @bind:event="oninput"
+                              id="itemsInput"
+                              class="form-control"
+                              rows="8"
+                              placeholder="Anna&#10;Bo&#10;Clara&#10;David&#10;Eva&#10;Filip"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="countInput" class="form-label">
+                        How many to pick:
+                    </label>
+                    <input type="number"
+                           @bind="count"
+                           id="countInput"
+                           class="form-control"
+                           min="1"
+                           max="@MaxCount"
+                           style="max-width: 120px;" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @errorMessage
+                    </div>
+                }
+
+                <button @onclick="DoSpin"
+                        class="btn btn-primary btn-lg w-100"
+                        disabled="@(!CanSpin)">
+                    🎰 Spin!
+                </button>
+
+                <div class="mt-2 text-muted text-center">
+                    <small>@ParsedItems.Length items entered</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string itemsText = "";
+    private int count = 1;
+    private string? errorMessage;
+
+    private string[] ParsedItems => itemsText
+        .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Where(s => !string.IsNullOrWhiteSpace(s))
+        .ToArray();
+
+    private int MaxCount => Math.Max(1, ParsedItems.Length);
+
+    private bool CanSpin => ParsedItems.Length >= 2 && count >= 1 && count <= ParsedItems.Length;
+
+    private void DoSpin()
+    {
+        errorMessage = null;
+        var items = ParsedItems;
+
+        if (items.Length < 2)
+        {
+            errorMessage = "Enter at least 2 items.";
+            return;
+        }
+
+        if (count < 1 || count > items.Length)
+        {
+            errorMessage = $"Pick count must be between 1 and {items.Length}.";
+            return;
+        }
+
+        var result = WheelSpinner.Spin(items, count);
+        var encoded = SpinEncoder.Encode(result);
+        Navigation.NavigateTo($"/spin/{encoded}");
+    }
+}

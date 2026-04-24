@@ -1,0 +1,144 @@
+@page "/spin/{EncodedData}"
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Spin Result</PageTitle>
+
+@if (spinData is null)
+{
+    <div class="text-center py-5">
+        <div class="alert alert-warning d-inline-block">
+            <h4>Invalid spin link</h4>
+            <p>The link is corrupt or expired.</p>
+            <a href="/" class="btn btn-primary">Create a new spin</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 text-center">
+            @* Wheel canvas *@
+            <div class="position-relative d-inline-block mb-3">
+                <canvas id="wheelCanvas" width="500" height="500"
+                        style="max-width: 100%; height: auto;"></canvas>
+                @* Pointer triangle *@
+                <div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+                            font-size: 2rem; z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                    ▼
+                </div>
+            </div>
+
+            @* Result section — hidden during animation, shown after *@
+            @if (animationComplete)
+            {
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <h3 class="card-title">🎉 Selected!</h3>
+                        <ul class="list-group list-group-flush">
+                            @foreach (var name in spinData.Selected)
+                            {
+                                <li class="list-group-item fs-5 fw-bold text-success">
+                                    ✅ @name
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
+                    <button @onclick="CopyLink" class="btn btn-outline-secondary">
+                        📋 Copy link
+                    </button>
+                    <button @onclick="SpinAgain" class="btn btn-outline-primary">
+                        🔄 Spin again with same items
+                    </button>
+                    <a href="/" class="btn btn-primary">
+                        🏠 New spin
+                    </a>
+                </div>
+
+                @if (linkCopied)
+                {
+                    <div class="text-success mt-2"><small>Link copied!</small></div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? EncodedData { get; set; }
+
+    private SpinData? spinData;
+    private bool animationComplete;
+    private bool linkCopied;
+    private DotNetObjectReference<SpinResult>? dotNetRef;
+
+    protected override void OnParametersSet()
+    {
+        animationComplete = false;
+        linkCopied = false;
+
+        if (string.IsNullOrEmpty(EncodedData))
+        {
+            spinData = null;
+            return;
+        }
+
+        try
+        {
+            spinData = SpinEncoder.Decode(EncodedData);
+        }
+        catch (FormatException)
+        {
+            spinData = null;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && spinData is not null)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("WheelCanvas.startSpin",
+                "wheelCanvas",
+                spinData.Items,
+                spinData.SelectedIndices,
+                dotNetRef);
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript when the animation completes.
+    /// </summary>
+    [JSInvokable]
+    public void OnSpinComplete()
+    {
+        animationComplete = true;
+        StateHasChanged();
+    }
+
+    private async Task CopyLink()
+    {
+        var uri = Navigation.Uri;
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", uri);
+        linkCopied = true;
+    }
+
+    private void SpinAgain()
+    {
+        if (spinData is null) return;
+
+        var newResult = WheelSpinner.Spin(spinData.Items, spinData.Count);
+        var encoded = SpinEncoder.Encode(newResult);
+        Navigation.NavigateTo($"/spin/{encoded}", forceLoad: false);
+    }
+
+    public void Dispose()
+    {
+        dotNetRef?.Dispose();
+    }
+}
