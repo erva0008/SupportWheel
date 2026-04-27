@@ -1,180 +1,505 @@
 /**
  * Wheel canvas animation for Spin the Wheel.
  * Called from Blazor WASM via JS interop.
+ *
+ * Multiple pointers (one per winner) are drawn on canvas, aligned to
+ * the actual winner segment positions. Winners are arranged on the wheel
+ * via _arrangeItems so each one lands under a pointer when the spin stops.
  */
 window.WheelCanvas = {
+    _animFrameId: null,
+    _delayTimeoutId: null,
+    _pulseFrameId: null,
+
+    _cancelPending: function () {
+        if (this._animFrameId) {
+            cancelAnimationFrame(this._animFrameId);
+            this._animFrameId = null;
+        }
+        if (this._delayTimeoutId) {
+            clearTimeout(this._delayTimeoutId);
+            this._delayTimeoutId = null;
+        }
+        if (this._pulseFrameId) {
+            cancelAnimationFrame(this._pulseFrameId);
+            this._pulseFrameId = null;
+        }
+    },
+
+    /**
+     * Arrange items for display so that winners are evenly spaced on the wheel.
+     * Returns { displayItems, winnerDisplayIndices } where winnerDisplayIndices[j]
+     * is the display-order index for winner j.
+     */
+    _arrangeItems: function (items, selectedIndices) {
+        const N = items.length;
+        const K = selectedIndices.length;
+
+        // Target display positions for each winner — evenly spaced
+        const winnerPositions = [];
+        for (let j = 0; j < K; j++) {
+            winnerPositions.push(Math.floor(j * N / K));
+        }
+
+        const winnerPosSet = new Set(winnerPositions);
+        const displayItems = new Array(N);
+
+        // Place winners at their target positions
+        for (let j = 0; j < K; j++) {
+            displayItems[winnerPositions[j]] = items[selectedIndices[j]];
+        }
+
+        // Fill non-winners in remaining slots, preserving their relative order
+        const nonWinners = items.filter(function (_, i) {
+            return !selectedIndices.includes(i);
+        });
+        let nwIdx = 0;
+        for (let i = 0; i < N; i++) {
+            if (!winnerPosSet.has(i)) {
+                displayItems[i] = nonWinners[nwIdx++];
+            }
+        }
+
+        return { displayItems: displayItems, winnerDisplayIndices: winnerPositions };
+    },
+
+    /**
+     * Generate a modern color palette using HSL for consistent saturation/lightness.
+     * Returns an array of CSS color strings.
+     */
+    _generateColors: function (count) {
+        const colors = [];
+        // Golden-angle offset for maximal hue separation
+        const goldenAngle = 137.508;
+        for (let i = 0; i < count; i++) {
+            const hue = (i * goldenAngle) % 360;
+            colors.push('hsl(' + hue + ', 68%, 58%)');
+        }
+        return colors;
+    },
+
     /**
      * Start the spin animation.
      * @param {string} canvasId - The canvas element ID
      * @param {string[]} items - All items on the wheel
-     * @param {number[]} selectedIndices - Indices of selected items
+     * @param {number[]} selectedIndices - Indices of selected items (into items[])
      * @param {object} dotNetRef - DotNet object reference for callback
      */
     startSpin: function (canvasId, items, selectedIndices, dotNetRef) {
+        this._cancelPending();
+
         const canvas = document.getElementById(canvasId);
         if (!canvas) return;
 
+        const self = this;
         const ctx = canvas.getContext('2d');
         const size = canvas.width;
         const center = size / 2;
-        const radius = size / 2 - 20;
-        const segmentCount = items.length;
-        const segmentAngle = (2 * Math.PI) / segmentCount;
+        const outerRingWidth = 8;
+        const radius = size / 2 - 20 - outerRingWidth;
+        const N = items.length;
+        const K = selectedIndices.length;
+        const segmentAngle = (2 * Math.PI) / N;
 
-        // Color palette
-        const colors = [
-            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-            '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
-            '#F8C471', '#82E0AA', '#F1948A', '#AED6F1', '#D7BDE2',
-            '#A3E4D7', '#FAD7A0', '#A9CCE3', '#D5F5E3', '#FADBD8'
-        ];
+        // Rearrange items so winners are evenly distributed
+        const arranged = this._arrangeItems(items, selectedIndices);
+        const displayItems = arranged.displayItems;
+        const winnerDisplayIndices = arranged.winnerDisplayIndices;
+        const winnerDisplaySet = new Set(winnerDisplayIndices);
 
-        // Calculate target rotation so the first selected segment ends up at the pointer (top).
-        // The pointer is at the top of the canvas (angle = -PI/2).
-        // Each segment i spans from segmentAngle*i to segmentAngle*(i+1), with center at segmentAngle*i + segmentAngle/2.
-        // We rotate the wheel by totalRotation. After rotation, segment i's center is at segmentAngle*i + segmentAngle/2 + totalRotation.
-        // We want that to equal -PI/2 (mod 2*PI), i.e. the pointer position.
-        const targetSegmentIndex = selectedIndices[0];
-        const targetSegmentCenter = segmentAngle * targetSegmentIndex + segmentAngle / 2;
-        // We need: targetSegmentCenter + totalRotation ≡ -PI/2 (mod 2*PI)
-        // totalRotation = -PI/2 - targetSegmentCenter + N * 2*PI
-        const extraRotations = 5 + Math.random() * 3; // 5-8 full spins
-        const alignOffset = (-Math.PI / 2 - targetSegmentCenter) % (2 * Math.PI) + extraRotations * 2 * Math.PI;
-        // Ensure positive total rotation (clockwise visual spin)
-        const totalRotation = alignOffset > 0 ? alignOffset : alignOffset + 2 * Math.PI;
+        // Pointer angles — aligned to the actual winner segment center positions.
+        // Winners sit at display indices winnerDisplayIndices[j], so each pointer
+        // aims at that segment's center. This is only perfectly evenly spaced when
+        // N is divisible by K; otherwise pointers follow the floor(j*N/K) spacing.
+        const pointerAngles = [];
+        for (let j = 0; j < K; j++) {
+            pointerAngles.push(-Math.PI / 2 + winnerDisplayIndices[j] * segmentAngle);
+        }
 
-        const duration = 5000; // 5 seconds
-        const startTime = performance.now();
+        // Final rotation: segment 0's center must align with pointer 0 (12 o'clock = -π/2)
+        // Segment i center is at: rotation + (i + 0.5) * segmentAngle
+        // For i=0, pointer at -π/2: rotation + 0.5 * segmentAngle = -π/2
+        const finalAlignRotation = -Math.PI / 2 - 0.5 * segmentAngle;
+
+        // Add 5–8 extra full spins for drama
+        const extraRotations = 5 + Math.floor(Math.random() * 4);
+        const totalRotation = finalAlignRotation + extraRotations * 2 * Math.PI;
+
+        const colors = this._generateColors(N);
+
+        const duration = 5000;
+        let startTime = null;
 
         function easeOutCubic(t) {
             return 1 - Math.pow(1 - t, 3);
         }
 
+        function truncateName(name) {
+            return name.length > 12 ? name.substring(0, 11) + '\u2026' : name;
+        }
+
+        /** Draw the outer decorative ring around the wheel. */
+        function drawOuterRing() {
+            const outerR = radius + outerRingWidth;
+            const grad = ctx.createRadialGradient(center, center, radius, center, center, outerR);
+            grad.addColorStop(0, '#4a4a5a');
+            grad.addColorStop(0.5, '#5c5c6e');
+            grad.addColorStop(1, '#3a3a48');
+
+            ctx.beginPath();
+            ctx.arc(center, center, outerR, 0, 2 * Math.PI);
+            ctx.arc(center, center, radius, 0, 2 * Math.PI, true);
+            ctx.closePath();
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            // Subtle inner highlight
+            ctx.beginPath();
+            ctx.arc(center, center, outerR, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(center, center, radius, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        /**
+         * Draw pointer triangles on the canvas (fixed, not rotating).
+         * @param {boolean} glow - Whether to draw pointers in glowing winner style
+         */
+        function drawPointers(glow) {
+            var pointerLen = 20;
+            var halfBase = 10;
+
+            for (let j = 0; j < K; j++) {
+                var angle = pointerAngles[j];
+
+                // Tip points inward (toward center), base sits outside the wheel
+                var tipR = radius - 4;
+                var baseR = radius + outerRingWidth + pointerLen;
+
+                var tipX = center + tipR * Math.cos(angle);
+                var tipY = center + tipR * Math.sin(angle);
+
+                // Perpendicular to the angle direction
+                var perpX = -Math.sin(angle);
+                var perpY = Math.cos(angle);
+
+                var baseX = center + baseR * Math.cos(angle);
+                var baseY = center + baseR * Math.sin(angle);
+
+                // Drop shadow
+                ctx.save();
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+
+                ctx.beginPath();
+                ctx.moveTo(tipX, tipY);
+                ctx.lineTo(baseX + halfBase * perpX, baseY + halfBase * perpY);
+                ctx.lineTo(baseX - halfBase * perpX, baseY - halfBase * perpY);
+                ctx.closePath();
+
+                if (glow) {
+                    var glowGrad = ctx.createLinearGradient(baseX, baseY, tipX, tipY);
+                    glowGrad.addColorStop(0, '#FF6B35');
+                    glowGrad.addColorStop(1, '#FFD700');
+                    ctx.fillStyle = glowGrad;
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.shadowColor = '#FF4500';
+                    ctx.shadowBlur = 14;
+                } else {
+                    var ptrGrad = ctx.createLinearGradient(baseX, baseY, tipX, tipY);
+                    ptrGrad.addColorStop(0, '#2c2c3a');
+                    ptrGrad.addColorStop(1, '#4a4a5a');
+                    ctx.fillStyle = ptrGrad;
+                    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+                    ctx.lineWidth = 1.5;
+                }
+
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function drawCenterCircle(emoji) {
+            var centerR = 30;
+
+            // Shadow under the center circle
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 10;
+
+            ctx.beginPath();
+            ctx.arc(center, center, centerR, 0, 2 * Math.PI);
+
+            var cGrad = ctx.createRadialGradient(
+                center - centerR * 0.25, center - centerR * 0.25, centerR * 0.1,
+                center, center, centerR
+            );
+            cGrad.addColorStop(0, '#ffffff');
+            cGrad.addColorStop(1, '#e0e0e8');
+            ctx.fillStyle = cGrad;
+            ctx.fill();
+            ctx.restore();
+
+            // Border ring
+            ctx.beginPath();
+            ctx.arc(center, center, centerR, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#4a4a5a';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Inner accent ring
+            ctx.beginPath();
+            ctx.arc(center, center, centerR - 3, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            if (emoji) {
+                ctx.font = 'bold 22px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#333';
+                ctx.fillText(emoji, center, center);
+            }
+        }
+
+        /** Draw a single segment with gradient fill. */
+        function drawSegment(index, startAng, endAng, color, alpha) {
+            ctx.save();
+            ctx.globalAlpha = alpha;
+
+            ctx.beginPath();
+            ctx.moveTo(center, center);
+            ctx.arc(center, center, radius, startAng, endAng);
+            ctx.closePath();
+
+            // Subtle radial gradient for depth
+            var midAngle = (startAng + endAng) / 2;
+            var gx = center + radius * 0.5 * Math.cos(midAngle);
+            var gy = center + radius * 0.5 * Math.sin(midAngle);
+            var segGrad = ctx.createRadialGradient(center, center, radius * 0.15, gx, gy, radius);
+            segGrad.addColorStop(0, lightenColor(color, 20));
+            segGrad.addColorStop(1, color);
+            ctx.fillStyle = segGrad;
+            ctx.fill();
+
+            // White separator
+            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            ctx.globalAlpha = 1.0;
+            ctx.restore();
+        }
+
+        /** Lighten a CSS color string by the given percentage. Works for hsl() strings. */
+        function lightenColor(color, amount) {
+            // Parse hsl(h, s%, l%)
+            var match = color.match(/hsl\(\s*([\d.]+),\s*([\d.]+)%,\s*([\d.]+)%\)/);
+            if (match) {
+                var h = parseFloat(match[1]);
+                var s = parseFloat(match[2]);
+                var l = Math.min(100, parseFloat(match[3]) + amount);
+                return 'hsl(' + h + ', ' + s + '%, ' + l + '%)';
+            }
+            return color;
+        }
+
+        /** Draw text label for a segment with shadow for readability. */
+        function drawSegmentText(startAng, text, style) {
+            ctx.save();
+            ctx.translate(center, center);
+            ctx.rotate(startAng + segmentAngle / 2);
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+
+            // Text shadow for contrast
+            ctx.shadowColor = 'rgba(0,0,0,0.35)';
+            ctx.shadowBlur = 3;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+
+            ctx.fillStyle = style.color;
+            ctx.font = style.font;
+            ctx.fillText(truncateName(text), radius - 18, 0);
+
+            ctx.restore();
+        }
+
         function drawWheel(rotation) {
             ctx.clearRect(0, 0, size, size);
 
-            for (let i = 0; i < segmentCount; i++) {
-                const startAngle = rotation + segmentAngle * i;
-                const endAngle = startAngle + segmentAngle;
+            var fontSize = Math.max(12, Math.min(18, 200 / N));
 
-                // Segment fill
-                ctx.beginPath();
-                ctx.moveTo(center, center);
-                ctx.arc(center, center, radius, startAngle, endAngle);
-                ctx.closePath();
-                ctx.fillStyle = colors[i % colors.length];
-                ctx.fill();
-
-                // Segment border
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // Text
-                ctx.save();
-                ctx.translate(center, center);
-                ctx.rotate(startAngle + segmentAngle / 2);
-                ctx.textAlign = 'right';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#333';
-                ctx.font = `bold ${Math.max(12, Math.min(18, 200 / segmentCount))}px sans-serif`;
-
-                let name = items[i];
-                if (name.length > 12) name = name.substring(0, 11) + '\u2026';
-
-                ctx.fillText(name, radius - 15, 0);
-                ctx.restore();
+            // Draw segments
+            for (let i = 0; i < N; i++) {
+                var startAng = rotation + segmentAngle * i;
+                var endAng = startAng + segmentAngle;
+                drawSegment(i, startAng, endAng, colors[i % colors.length], 1.0);
             }
 
-            // Center circle
-            ctx.beginPath();
-            ctx.arc(center, center, 25, 0, 2 * Math.PI);
-            ctx.fillStyle = '#fff';
-            ctx.fill();
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 3;
-            ctx.stroke();
+            // Draw text on top of all segments (avoids clipping by neighbors)
+            for (let i = 0; i < N; i++) {
+                var startAng = rotation + segmentAngle * i;
+                drawSegmentText(startAng, displayItems[i], {
+                    color: '#fff',
+                    font: 'bold ' + fontSize + 'px "Segoe UI", system-ui, sans-serif'
+                });
+            }
+
+            drawOuterRing();
+            drawCenterCircle();
+            drawPointers(false);
         }
 
-        function highlightWinners(rotation) {
+        /**
+         * Draw the wheel with winners highlighted.
+         * @param {number} rotation - Final rotation angle
+         * @param {number} highlightIndex - Which winner in sequence to pulse (-1 = all steady)
+         * @param {number} pulseScale - Pulse intensity 0..1
+         */
+        function drawHighlighted(rotation, highlightIndex, pulseScale) {
             ctx.clearRect(0, 0, size, size);
 
-            for (let i = 0; i < segmentCount; i++) {
-                const startAngle = rotation + segmentAngle * i;
-                const endAngle = startAngle + segmentAngle;
-                const isWinner = selectedIndices.includes(i);
+            var fontSize = Math.max(12, Math.min(18, 200 / N));
 
-                ctx.beginPath();
-                ctx.moveTo(center, center);
-                ctx.arc(center, center, radius, startAngle, endAngle);
-                ctx.closePath();
+            // Draw all segments
+            for (let i = 0; i < N; i++) {
+                var startAng = rotation + segmentAngle * i;
+                var endAng = startAng + segmentAngle;
+                var isWinner = winnerDisplaySet.has(i);
+                var winnerSeqIdx = winnerDisplayIndices.indexOf(i);
+                var isPulsing = highlightIndex >= 0 && winnerSeqIdx === highlightIndex;
 
                 if (isWinner) {
-                    ctx.fillStyle = '#FFD700'; // Gold for winners
+                    ctx.beginPath();
+                    ctx.moveTo(center, center);
+                    ctx.arc(center, center, radius, startAng, endAng);
+                    ctx.closePath();
+
+                    // Rich gold gradient for winners
+                    var midAngle = (startAng + endAng) / 2;
+                    var gx = center + radius * 0.5 * Math.cos(midAngle);
+                    var gy = center + radius * 0.5 * Math.sin(midAngle);
+                    var winGrad = ctx.createRadialGradient(center, center, radius * 0.1, gx, gy, radius);
+
+                    if (isPulsing) {
+                        var alpha = 0.8 + 0.2 * pulseScale;
+                        winGrad.addColorStop(0, 'rgba(255,245,180,' + alpha + ')');
+                        winGrad.addColorStop(0.5, 'rgba(255,215,0,' + alpha + ')');
+                        winGrad.addColorStop(1, 'rgba(255,180,0,' + alpha + ')');
+                    } else {
+                        winGrad.addColorStop(0, '#FFF5B4');
+                        winGrad.addColorStop(0.5, '#FFD700');
+                        winGrad.addColorStop(1, '#FFB400');
+                    }
+
+                    ctx.fillStyle = winGrad;
                     ctx.fill();
-                    ctx.strokeStyle = '#FF8C00';
-                    ctx.lineWidth = 4;
-                    ctx.stroke();
+
+                    // Glow effect for pulsing
+                    if (isPulsing) {
+                        ctx.save();
+                        ctx.shadowColor = 'rgba(255,180,0,0.6)';
+                        ctx.shadowBlur = 12 + 8 * pulseScale;
+                        ctx.strokeStyle = '#FF6B35';
+                        ctx.lineWidth = 4 + 3 * pulseScale;
+                        ctx.stroke();
+                        ctx.restore();
+                    } else {
+                        ctx.strokeStyle = '#E6A800';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                    }
                 } else {
-                    ctx.fillStyle = colors[i % colors.length];
-                    ctx.globalAlpha = 0.4; // Dim non-winners
-                    ctx.fill();
-                    ctx.globalAlpha = 1.0;
-                    ctx.strokeStyle = '#fff';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
+                    drawSegment(i, startAng, endAng, colors[i % colors.length], 0.3);
                 }
-
-                // Text
-                ctx.save();
-                ctx.translate(center, center);
-                ctx.rotate(startAngle + segmentAngle / 2);
-                ctx.textAlign = 'right';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = isWinner ? '#333' : '#999';
-                const fontSize = Math.max(12, Math.min(18, 200 / segmentCount));
-                ctx.font = isWinner
-                    ? `bold ${fontSize + 2}px sans-serif`
-                    : `${fontSize}px sans-serif`;
-
-                let name = items[i];
-                if (name.length > 12) name = name.substring(0, 11) + '\u2026';
-
-                ctx.fillText(name, radius - 15, 0);
-                ctx.restore();
             }
 
-            // Center circle
-            ctx.beginPath();
-            ctx.arc(center, center, 25, 0, 2 * Math.PI);
-            ctx.fillStyle = '#fff';
-            ctx.fill();
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 3;
-            ctx.stroke();
+            // Draw text on top
+            for (let i = 0; i < N; i++) {
+                var startAng = rotation + segmentAngle * i;
+                var isWinner = winnerDisplaySet.has(i);
+                var winnerSeqIdx = winnerDisplayIndices.indexOf(i);
+                var isPulsing = highlightIndex >= 0 && winnerSeqIdx === highlightIndex;
 
-            // Center emoji
-            ctx.font = 'bold 20px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#333';
-            ctx.fillText('\uD83C\uDF89', center, center);
+                if (isPulsing) {
+                    drawSegmentText(startAng, displayItems[i], {
+                        color: '#1a1a1a',
+                        font: 'bold ' + (fontSize + 4 + 2 * pulseScale) + 'px "Segoe UI", system-ui, sans-serif'
+                    });
+                } else if (isWinner) {
+                    drawSegmentText(startAng, displayItems[i], {
+                        color: '#2c2c2c',
+                        font: 'bold ' + (fontSize + 2) + 'px "Segoe UI", system-ui, sans-serif'
+                    });
+                } else {
+                    drawSegmentText(startAng, displayItems[i], {
+                        color: 'rgba(255,255,255,0.5)',
+                        font: fontSize + 'px "Segoe UI", system-ui, sans-serif'
+                    });
+                }
+            }
+
+            drawOuterRing();
+            drawCenterCircle('\uD83C\uDF89');
+            drawPointers(true);
+        }
+
+        /**
+         * Sequential pulse animation — highlights each winner one by one,
+         * then settles into a steady highlighted state.
+         */
+        function startWinnerPulse(finalRotation) {
+            var pulseDuration = 600;
+            var pulseStart = performance.now();
+            var totalPulseTime = pulseDuration * K;
+
+            function pulseFrame(now) {
+                var elapsed = now - pulseStart;
+
+                if (elapsed >= totalPulseTime) {
+                    drawHighlighted(finalRotation, -1, 0);
+                    self._pulseFrameId = null;
+                    return;
+                }
+
+                var winnerIdx = Math.floor(elapsed / pulseDuration);
+                var t = (elapsed % pulseDuration) / pulseDuration;
+                var scale = Math.sin(t * Math.PI);
+
+                drawHighlighted(finalRotation, winnerIdx, scale);
+                self._pulseFrameId = requestAnimationFrame(pulseFrame);
+            }
+
+            self._pulseFrameId = requestAnimationFrame(pulseFrame);
         }
 
         function animate(now) {
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const easedProgress = easeOutCubic(progress);
-            const currentRotation = easedProgress * totalRotation;
+            if (!startTime) startTime = now;
+            var elapsed = now - startTime;
+            var progress = Math.min(elapsed / duration, 1);
+            var easedProgress = easeOutCubic(progress);
+            var currentRotation = easedProgress * totalRotation;
 
             if (progress < 1) {
                 drawWheel(currentRotation);
-                requestAnimationFrame(animate);
+                self._animFrameId = requestAnimationFrame(animate);
             } else {
-                // Animation complete — highlight winners
-                highlightWinners(currentRotation);
+                self._animFrameId = null;
 
-                // Notify Blazor
+                startWinnerPulse(currentRotation);
+
                 if (dotNetRef) {
                     dotNetRef.invokeMethodAsync('OnSpinComplete');
                 }
@@ -183,6 +508,9 @@ window.WheelCanvas = {
 
         // Initial draw, then start animation after a brief pause
         drawWheel(0);
-        setTimeout(function () { requestAnimationFrame(animate); }, 500);
+        this._delayTimeoutId = setTimeout(function () {
+            self._delayTimeoutId = null;
+            self._animFrameId = requestAnimationFrame(animate);
+        }, 500);
     }
 };

@@ -4,60 +4,65 @@
 <PageTitle>Spin the Wheel</PageTitle>
 
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="card-title mb-3">Add your items</h2>
+    <div class="col-md-10 col-lg-8">
+        <div class="glass-card p-4 p-md-5">
+            <h2 style="font-weight: 600; margin-bottom: 1.5rem; font-size: 1.4rem;">Add your items</h2>
 
-                <div class="mb-3">
-                    <label for="itemsInput" class="form-label">
-                        Enter one item per line:
-                    </label>
-                    <textarea @bind="itemsText"
-                              @bind:event="oninput"
-                              id="itemsInput"
-                              class="form-control"
-                              rows="8"
-                              placeholder="Anna&#10;Bo&#10;Clara&#10;David&#10;Eva&#10;Filip"></textarea>
-                </div>
+            <div class="mb-4">
+                <label for="itemsInput" class="form-label">
+                    Enter one item per line:
+                </label>
+                <textarea @bind="itemsText"
+                          @bind:event="oninput"
+                          id="itemsInput"
+                          class="form-control"
+                          rows="8"
+                          placeholder="@("Anna\nBo\nClara\nDavid\nEva\nFilip")"></textarea>
 
-                <div class="mb-3">
-                    <label for="countInput" class="form-label">
-                        How many to pick:
-                    </label>
-                    <input type="number"
-                           @bind="count"
-                           id="countInput"
-                           class="form-control"
-                           min="1"
-                           max="@MaxCount"
-                           style="max-width: 120px;" />
-                </div>
-
-                @if (!string.IsNullOrEmpty(errorMessage))
+                @if (Duplicates.Count > 0)
                 {
-                    <div class="alert alert-danger" role="alert">
-                        @errorMessage
+                    <div class="alert alert-warning mt-2 mb-0" role="alert">
+                        ⚠️ Duplicate items: @string.Join(", ", Duplicates)
                     </div>
                 }
+            </div>
 
-                <button @onclick="DoSpin"
-                        class="btn btn-primary btn-lg w-100"
-                        disabled="@(!CanSpin)">
-                    🎰 Spin!
-                </button>
+            <div class="mb-4">
+                <label for="countInput" class="form-label">
+                    How many to pick:
+                </label>
+                <input type="number"
+                       @bind="count"
+                       id="countInput"
+                       class="form-control"
+                       min="1"
+                       max="@MaxCount"
+                       style="max-width: 120px;" />
+            </div>
 
-                <div class="mt-2 text-muted text-center">
-                    <small>@ParsedItems.Length items entered</small>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @errorMessage
                 </div>
+            }
+
+            <button @onclick="DoSpin"
+                    class="btn-glow w-100"
+                    disabled="@(!CanSpin)">
+                🎰 Spin!
+            </button>
+
+            <div class="mt-3 text-center" style="color: var(--text-secondary); font-size: 0.85rem;">
+                @ParsedItems.Length items entered
             </div>
         </div>
     </div>
 </div>
 
 @code {
-    private string itemsText = "";
-    private int count = 1;
+    private string itemsText = "Anna\nBo\nClara\nDavid\nEva\nFilip\nGreta";
+    private int count = 2;
     private string? errorMessage;
 
     private string[] ParsedItems => itemsText
@@ -65,9 +70,18 @@
         .Where(s => !string.IsNullOrWhiteSpace(s))
         .ToArray();
 
+    private IReadOnlyList<string> Duplicates => ParsedItems
+        .GroupBy(s => s, StringComparer.OrdinalIgnoreCase)
+        .Where(g => g.Count() > 1)
+        .Select(g => g.Key)
+        .ToList();
+
     private int MaxCount => Math.Max(1, ParsedItems.Length);
 
-    private bool CanSpin => ParsedItems.Length >= 2 && count >= 1 && count <= ParsedItems.Length;
+    private bool CanSpin => ParsedItems.Length >= 2
+                            && count >= 1
+                            && count <= ParsedItems.Length
+                            && Duplicates.Count == 0;
 
     private void DoSpin()
     {
@@ -83,6 +97,13 @@
         if (count < 1 || count > items.Length)
         {
             errorMessage = $"Pick count must be between 1 and {items.Length}.";
+            return;
+        }
+
+        var duplicates = Duplicates;
+        if (duplicates.Count > 0)
+        {
+            errorMessage = $"Duplicate items: {string.Join(", ", duplicates)}";
             return;
         }
 

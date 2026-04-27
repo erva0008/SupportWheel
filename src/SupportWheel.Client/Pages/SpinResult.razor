@@ -8,60 +8,56 @@
 @if (spinData is null)
 {
     <div class="text-center py-5">
-        <div class="alert alert-warning d-inline-block">
-            <h4>Invalid spin link</h4>
-            <p>The link is corrupt or expired.</p>
-            <a href="/" class="btn btn-primary">Create a new spin</a>
+        <div class="glass-card d-inline-block p-4 p-md-5">
+            <h4 style="font-weight: 600;">Invalid spin link</h4>
+            <p style="color: var(--text-secondary);">The link is corrupt or expired.</p>
+            <a href="/" class="btn-glow" style="text-decoration: none;">Create a new spin</a>
         </div>
     </div>
 }
 else
 {
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6 text-center">
-            @* Wheel canvas *@
-            <div class="position-relative d-inline-block mb-3">
+        <div class="col-md-10 col-lg-8 text-center">
+            @* Wheel canvas — pointers are drawn on the canvas itself *@
+            <div class="wheel-wrapper mb-4">
                 <canvas id="wheelCanvas" width="500" height="500"
                         style="max-width: 100%; height: auto;"></canvas>
-                @* Pointer triangle *@
-                <div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-                            font-size: 2rem; z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
-                    ▼
-                </div>
             </div>
 
             @* Result section — hidden during animation, shown after *@
             @if (animationComplete)
             {
-                <div class="card shadow-sm mt-3">
-                    <div class="card-body">
-                        <h3 class="card-title">🎉 Selected!</h3>
-                        <ul class="list-group list-group-flush">
-                            @foreach (var name in spinData.Selected)
-                            {
-                                <li class="list-group-item fs-5 fw-bold text-success">
-                                    ✅ @name
-                                </li>
-                            }
-                        </ul>
-                    </div>
+                <div class="glass-card p-4 mt-3">
+                    <h3 style="font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem;
+                               background: linear-gradient(135deg, #34d399, #60a5fa);
+                               -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                               background-clip: text;">
+                        🎉 Selected!
+                    </h3>
+                    <ul class="result-list">
+                        @foreach (var name in spinData.Selected)
+                        {
+                            <li>✅ @name</li>
+                        }
+                    </ul>
                 </div>
 
                 <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
-                    <button @onclick="CopyLink" class="btn btn-outline-secondary">
+                    <button @onclick="CopyLink" class="btn-ghost">
                         📋 Copy link
                     </button>
-                    <button @onclick="SpinAgain" class="btn btn-outline-primary">
-                        🔄 Spin again with same items
+                    <button @onclick="SpinAgain" class="btn-ghost">
+                        🔄 Spin again
                     </button>
-                    <a href="/" class="btn btn-primary">
+                    <a href="/" class="btn-glow" style="text-decoration: none; font-size: 1rem; padding: 0.6rem 1.2rem;">
                         🏠 New spin
                     </a>
                 </div>
 
                 @if (linkCopied)
                 {
-                    <div class="text-success mt-2"><small>Link copied!</small></div>
+                    <div class="toast-copied mt-2"><small>Link copied!</small></div>
                 }
             }
         </div>
@@ -74,6 +70,7 @@ else
 
     private SpinData? spinData;
     private bool animationComplete;
+    private bool needsAnimation;
     private bool linkCopied;
     private DotNetObjectReference<SpinResult>? dotNetRef;
 
@@ -81,6 +78,7 @@ else
     {
         animationComplete = false;
         linkCopied = false;
+        needsAnimation = false;
 
         if (string.IsNullOrEmpty(EncodedData))
         {
@@ -91,6 +89,7 @@ else
         try
         {
             spinData = SpinEncoder.Decode(EncodedData);
+            needsAnimation = true;
         }
         catch (FormatException)
         {
@@ -100,15 +99,21 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && spinData is not null)
-        {
-            dotNetRef = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync("WheelCanvas.startSpin",
-                "wheelCanvas",
-                spinData.Items,
-                spinData.SelectedIndices,
-                dotNetRef);
-        }
+        if (!needsAnimation || spinData is null)
+            return;
+
+        // Clear flag before await to prevent double-start
+        needsAnimation = false;
+
+        // Dispose previous reference before creating a new one
+        dotNetRef?.Dispose();
+        dotNetRef = DotNetObjectReference.Create(this);
+
+        await JS.InvokeVoidAsync("WheelCanvas.startSpin",
+            "wheelCanvas",
+            spinData.Items,
+            spinData.SelectedIndices,
+            dotNetRef);
     }
 
     /// <summary>

@@ -1,5 +1,34 @@
+/* ===== Theme custom properties ===== */
+:root {
+    --bg-start: #0f0c29;
+    --bg-mid: #1a1a4e;
+    --bg-end: #24243e;
+    --glass-bg: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --accent: #7c5cfc;
+    --accent-light: #a78bfa;
+    --accent-glow: rgba(124, 92, 252, 0.4);
+    --text-primary: #f0eef6;
+    --text-secondary: rgba(240, 238, 246, 0.55);
+    --success: #34d399;
+    --danger: #f87171;
+    --radius: 1rem;
+    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ===== Global resets ===== */
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: var(--font);
+    background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
+    color: var(--text-primary);
+    min-height: 100dvh;
+    margin: 0;
+}
+
+body {
+    background-attachment: fixed;
 }
 
 h1:focus {
@@ -7,17 +36,201 @@ h1:focus {
 }
 
 a, .btn-link {
-    color: #0071c1;
+    color: var(--accent-light);
 }
 
-.btn-primary {
+/* ===== Glass card ===== */
+.glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    animation: card-in 0.5s ease both;
+}
+
+@keyframes card-in {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ===== Buttons ===== */
+.btn-glow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, var(--accent), #6246ea);
     color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    box-shadow: 0 4px 20px var(--accent-glow);
+    transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+    cursor: pointer;
+}
+
+.btn-glow:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px var(--accent-glow);
+    filter: brightness(1.1);
+    color: #fff;
+}
+
+.btn-glow:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-glow:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
+    border: 1px solid var(--glass-border);
+    border-radius: 0.75rem;
+    background: var(--glass-bg);
+    color: var(--text-primary);
+    backdrop-filter: blur(8px);
+    transition: background var(--transition), border-color var(--transition), transform var(--transition);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+    color: #fff;
+}
+
+/* ===== Form controls (dark theme) ===== */
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.75rem;
+    color: var(--text-primary);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.form-control::placeholder {
+    color: var(--text-secondary);
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    color: var(--text-primary);
+}
+
+.form-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.9rem;
+    letter-spacing: 0.01em;
+}
+
+/* ===== Alerts (dark themed) ===== */
+.alert-danger {
+    background: rgba(248, 113, 113, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    color: var(--danger);
+    border-radius: 0.75rem;
+}
+
+.alert-warning {
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+    border-radius: 0.75rem;
+}
+
+/* ===== Result list ===== */
+.result-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.result-list li {
+    padding: 0.75rem 1rem;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--success);
+    border-bottom: 1px solid var(--glass-border);
+    animation: pop-in 0.35s ease both;
+}
+
+.result-list li:last-child {
+    border-bottom: none;
+}
+
+@keyframes pop-in {
+    from { opacity: 0; transform: translateX(-12px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Stagger the animation per child */
+.result-list li:nth-child(1) { animation-delay: 0.05s; }
+.result-list li:nth-child(2) { animation-delay: 0.12s; }
+.result-list li:nth-child(3) { animation-delay: 0.19s; }
+.result-list li:nth-child(4) { animation-delay: 0.26s; }
+.result-list li:nth-child(5) { animation-delay: 0.33s; }
+.result-list li:nth-child(6) { animation-delay: 0.40s; }
+
+/* ===== Canvas wrapper ===== */
+.wheel-wrapper {
+    display: flex;
+    justify-content: center;
+    animation: fade-scale-in 0.4s ease both;
+}
+
+@keyframes fade-scale-in {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* ===== Toast notification ===== */
+.toast-copied {
+    font-size: 0.85rem;
+    color: var(--success);
+    animation: fade-up 0.3s ease both;
+}
+
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Page fade-in ===== */
+.page-enter {
+    animation: page-fade 0.4s ease both;
+}
+
+@keyframes page-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ===== Bootstrap overrides / dark error ui ===== */
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent), #6246ea);
+    border: none;
+    color: #fff;
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .content {
@@ -25,17 +238,22 @@ a, .btn-link {
 }
 
 .valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
+    outline: 1px solid var(--success);
 }
 
 .invalid {
-    outline: 1px solid red;
+    outline: 1px solid var(--danger);
 }
 
 .validation-message {
-    color: red;
+    color: var(--danger);
 }
 
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* ===== Blazor infrastructure ===== */
 #blazor-error-ui {
     color-scheme: light only;
     background: lightyellow;
@@ -85,7 +303,7 @@ a, .btn-link {
     }
 
         .loading-progress circle:last-child {
-            stroke: #1b6ec2;
+            stroke: var(--accent);
             stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
             transition: stroke-dasharray 0.05s ease-in-out;
         }
@@ -95,6 +313,7 @@ a, .btn-link {
     text-align: center;
     font-weight: bold;
     inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+    color: var(--text-primary);
 }
 
     .loading-progress-text:after {
@@ -102,14 +321,33 @@ a, .btn-link {
     }
 
 code {
-    color: #c02d76;
+    color: #c084fc;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-    color: var(--bs-secondary-color);
+    color: var(--text-secondary);
     text-align: end;
 }
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* ===== Scrollbar (Webkit) ===== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+

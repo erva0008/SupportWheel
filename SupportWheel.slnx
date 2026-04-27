@@ -6,5 +6,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/SupportWheel.Api.Tests/SupportWheel.Api.Tests.csproj" />
     <Project Path="tests/SupportWheel.Client.Tests/SupportWheel.Client.Tests.csproj" />
+    <Project Path="tests/SupportWheel.Playwright/SupportWheel.Playwright.csproj" />
   </Folder>
 </Solution>

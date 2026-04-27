@@ -483,3 +483,17 @@ $RECYCLE.BIN/
 
 # Azure Functions local settings
 local.settings.json
+
+# Report files with potential secrets
+report.*.json
+
+# Test screenshots
+test-screenshots/
+
+# Visual test script
+test-wheel.js
+
+# Node.js
+node_modules/
+package.json
+package-lock.json
