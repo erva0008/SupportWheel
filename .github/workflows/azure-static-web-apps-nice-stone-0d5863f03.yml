@@ -30,7 +30,9 @@ jobs:
         run: dotnet publish src/SupportWheel.Client -c Release -o ./publish/client
 
       - name: Publish API
-        run: dotnet publish src/SupportWheel.Api -c Release -o ./publish/api
+        run: |
+          dotnet publish src/SupportWheel.Api -c Release -o ./publish/api
+          echo '{"IsEncrypted":false,"Values":{"FUNCTIONS_WORKER_RUNTIME":"dotnet-isolated"}}' > ./publish/api/local.settings.json
 
       - name: Build And Deploy
         id: builddeploy
