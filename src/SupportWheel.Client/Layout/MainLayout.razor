@@ -1,16 +1,47 @@
 @inherits LayoutComponentBase
+@using System.Globalization
+@using SupportWheel.Client.Resources
+@inject IJSRuntime JS
 
 <div class="container py-5 page-enter" style="max-width: 720px;">
-    <header class="text-center mb-5">
+    <header class="text-center mb-5 position-relative">
         <h1 style="font-size: 2.5rem; font-weight: 700;
                    background: linear-gradient(135deg, #a78bfa, #7c5cfc, #60a5fa);
                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
                    background-clip: text; filter: drop-shadow(0 0 24px rgba(124,92,252,0.3));">
             @Translation.AppTitle
         </h1>
+        <button @onclick="ToggleLanguageAsync"
+                class="btn btn-link position-absolute"
+                style="top: 0; right: 0; z-index: 10; cursor: pointer;
+                       font-size: 0.85rem; color: #a78bfa;
+                       text-decoration: none; opacity: 0.8; padding: 0;"
+                title="@LanguageToggleText">
+            🌐 @LanguageToggleText
+        </button>
     </header>
 
     <main>
         @Body
     </main>
 </div>
+
+@code {
+    private string LanguageToggleText =>
+        CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en"
+            ? Translation.SwitchToSwedish
+            : Translation.SwitchToEnglish;
+
+    private async Task ToggleLanguageAsync()
+    {
+        var newLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "sv" ? "en" : "sv";
+        var culture = new CultureInfo(newLang);
+
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.DefaultThreadCurrentUICulture = culture;
+
+        await JS.InvokeVoidAsync("localStorage.setItem", "supportwheel-lang", newLang);
+
+        StateHasChanged();
+    }
+}

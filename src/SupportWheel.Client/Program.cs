@@ -12,23 +12,24 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 
 var host = builder.Build();
 
-// Detect browser language and set culture
+// Resolve language: saved preference → Swedish default
+// Blazor WASM defaults to en-US, so we must always set culture explicitly.
+var lang = "sv";
 try
 {
     var js = host.Services.GetRequiredService<IJSRuntime>();
-    var browserLang = await js.InvokeAsync<string>("eval", "navigator.language || navigator.userLanguage");
+    var savedLang = await js.InvokeAsync<string?>("localStorage.getItem", "supportwheel-lang");
 
-    // Match to supported cultures: sv (default), en
-    var culture = browserLang.StartsWith("en", StringComparison.OrdinalIgnoreCase)
-        ? new CultureInfo("en")
-        : new CultureInfo("sv");
-
-    CultureInfo.DefaultThreadCurrentCulture = culture;
-    CultureInfo.DefaultThreadCurrentUICulture = culture;
+    if (savedLang is "en" or "sv")
+        lang = savedLang;
 }
 catch
 {
-    // Default to Swedish on failure
+    // localStorage unavailable — keep Swedish default
 }
+
+var culture = new CultureInfo(lang);
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 await host.RunAsync();

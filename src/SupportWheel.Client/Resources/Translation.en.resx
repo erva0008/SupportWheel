@@ -138,4 +138,10 @@ Filip</value>
   <data name="LinkCopied" xml:space="preserve">
     <value>Link copied!</value>
   </data>
+  <data name="SwitchToEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="SwitchToSwedish" xml:space="preserve">
+    <value>Svenska</value>
+  </data>
 </root>

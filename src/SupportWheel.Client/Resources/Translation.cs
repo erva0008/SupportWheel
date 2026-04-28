@@ -17,6 +17,8 @@ public static class Translation
 
     // Layout
     public static string AppTitle => GetString(nameof(AppTitle));
+    public static string SwitchToEnglish => GetString(nameof(SwitchToEnglish));
+    public static string SwitchToSwedish => GetString(nameof(SwitchToSwedish));
 
     // Home page
     public static string PageTitleHome => GetString(nameof(PageTitleHome));
