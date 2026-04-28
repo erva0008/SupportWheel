@@ -26,6 +26,89 @@ window.WheelCanvas = {
         }
     },
 
+    _startConfetti: function (canvasId) {
+        var wheelCanvas = document.getElementById(canvasId);
+        if (!wheelCanvas) return;
+
+        var overlay = document.createElement('canvas');
+        overlay.width = wheelCanvas.width;
+        overlay.height = wheelCanvas.height;
+        overlay.style.position = 'absolute';
+        overlay.style.top = wheelCanvas.offsetTop + 'px';
+        overlay.style.left = wheelCanvas.offsetLeft + 'px';
+        overlay.style.width = wheelCanvas.clientWidth + 'px';
+        overlay.style.height = wheelCanvas.clientHeight + 'px';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.zIndex = '1000';
+        wheelCanvas.parentElement.style.position = 'relative';
+        wheelCanvas.parentElement.appendChild(overlay);
+
+        var ctx = overlay.getContext('2d');
+        var cx = overlay.width / 2;
+        var cy = overlay.height / 2;
+        var colors = ['#a78bfa', '#7c5cfc', '#60a5fa', '#34d399', '#fbbf24', '#f87171'];
+        var particles = [];
+
+        for (var i = 0; i < 80; i++) {
+            var angle = Math.random() * 2 * Math.PI;
+            var speed = 3 + Math.random() * 6;
+            particles.push({
+                x: cx,
+                y: cy,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 2,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: 4 + Math.random() * 6,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.2,
+                opacity: 1,
+                isCircle: Math.random() > 0.5
+            });
+        }
+
+        var frame = 0;
+        var totalFrames = 180;
+
+        function animateConfetti() {
+            frame++;
+            if (frame > totalFrames) {
+                overlay.remove();
+                return;
+            }
+
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.15;
+                p.rotation += p.rotationSpeed;
+                p.opacity = Math.max(0, 1 - frame / totalFrames);
+
+                ctx.save();
+                ctx.globalAlpha = p.opacity;
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                ctx.fillStyle = p.color;
+
+                if (p.isCircle) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size / 2, 0, 2 * Math.PI);
+                    ctx.fill();
+                } else {
+                    ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+                }
+
+                ctx.restore();
+            }
+
+            requestAnimationFrame(animateConfetti);
+        }
+
+        requestAnimationFrame(animateConfetti);
+    },
+
     /**
      * Arrange items for display so that winners are evenly spaced on the wheel.
      * Returns { displayItems, winnerDisplayIndices } where winnerDisplayIndices[j]
@@ -207,12 +290,12 @@ window.WheelCanvas = {
 
                 if (glow) {
                     var glowGrad = ctx.createLinearGradient(baseX, baseY, tipX, tipY);
-                    glowGrad.addColorStop(0, '#FF6B35');
-                    glowGrad.addColorStop(1, '#FFD700');
+                    glowGrad.addColorStop(0, '#a78bfa');
+                    glowGrad.addColorStop(1, '#60a5fa');
                     ctx.fillStyle = glowGrad;
-                    ctx.strokeStyle = '#fff';
+                    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
                     ctx.lineWidth = 2;
-                    ctx.shadowColor = '#FF4500';
+                    ctx.shadowColor = 'rgba(124,92,252,0.7)';
                     ctx.shadowBlur = 14;
                 } else {
                     var ptrGrad = ctx.createLinearGradient(baseX, baseY, tipX, tipY);
@@ -379,7 +462,8 @@ window.WheelCanvas = {
                 var endAng = startAng + segmentAngle;
                 var isWinner = winnerDisplaySet.has(i);
                 var winnerSeqIdx = winnerDisplayIndices.indexOf(i);
-                var isPulsing = highlightIndex >= 0 && winnerSeqIdx === highlightIndex;
+                var isPulsing = (highlightIndex >= 0 && winnerSeqIdx === highlightIndex) ||
+                    (highlightIndex === -2 && isWinner);
 
                 if (isWinner) {
                     ctx.beginPath();
@@ -431,7 +515,8 @@ window.WheelCanvas = {
                 var startAng = rotation + segmentAngle * i;
                 var isWinner = winnerDisplaySet.has(i);
                 var winnerSeqIdx = winnerDisplayIndices.indexOf(i);
-                var isPulsing = highlightIndex >= 0 && winnerSeqIdx === highlightIndex;
+                var isPulsing = (highlightIndex >= 0 && winnerSeqIdx === highlightIndex) ||
+                    (highlightIndex === -2 && isWinner);
 
                 if (isPulsing) {
                     drawSegmentText(startAng, displayItems[i], {
@@ -469,8 +554,8 @@ window.WheelCanvas = {
                 var elapsed = now - pulseStart;
 
                 if (elapsed >= totalPulseTime) {
-                    drawHighlighted(finalRotation, -1, 0);
-                    self._pulseFrameId = null;
+                    // Transition to continuous subtle pulse for all winners
+                    startContinuousPulse(finalRotation, now);
                     return;
                 }
 
@@ -483,6 +568,20 @@ window.WheelCanvas = {
             }
 
             self._pulseFrameId = requestAnimationFrame(pulseFrame);
+        }
+
+        function startContinuousPulse(finalRotation, startNow) {
+            var continuousStart = startNow;
+
+            function continuousFrame(now) {
+                var elapsed = now - continuousStart;
+                // ~1.5 Hz oscillation
+                var scale = 0.15 + 0.15 * Math.sin(elapsed * (2 * Math.PI * 1.5) / 1000);
+                drawHighlighted(finalRotation, -2, scale);
+                self._pulseFrameId = requestAnimationFrame(continuousFrame);
+            }
+
+            self._pulseFrameId = requestAnimationFrame(continuousFrame);
         }
 
         function animate(now) {
@@ -499,6 +598,7 @@ window.WheelCanvas = {
                 self._animFrameId = null;
 
                 startWinnerPulse(currentRotation);
+                self._startConfetti(canvasId);
 
                 if (dotNetRef) {
                     dotNetRef.invokeMethodAsync('OnSpinComplete');

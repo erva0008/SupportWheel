@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using SupportWheel.Api.Models;
-using SupportWheel.Client.Services;
+using SupportWheel.Shared.Services;
 
 namespace SupportWheel.Api;
 

@@ -1,6 +1,6 @@
 using Microsoft.Playwright;
-using SupportWheel.Client.Models;
-using SupportWheel.Client.Services;
+using SupportWheel.Shared.Models;
+using SupportWheel.Shared.Services;
 using Xunit;
 
 namespace SupportWheel.Playwright;

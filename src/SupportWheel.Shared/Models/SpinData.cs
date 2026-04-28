@@ -1,4 +1,4 @@
-namespace SupportWheel.Client.Models;
+namespace SupportWheel.Shared.Models;
 
 /// <summary>
 /// Represents a spin result: the items in play and which were selected.
@@ -10,6 +10,12 @@ public sealed record SpinData
 
     /// <summary>Indices into Items of the selected winners.</summary>
     public required int[] SelectedIndices { get; init; }
+
+    /// <summary>
+    /// Indices into Items in the order they were drawn (reveal order for sequential mode).
+    /// Null for non-sequential spins or backward-compatible old links.
+    /// </summary>
+    public int[]? RevealOrderIndices { get; init; }
 
     /// <summary>Number of items to select.</summary>
     public int Count => SelectedIndices.Length;

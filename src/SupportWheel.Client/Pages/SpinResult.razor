@@ -3,15 +3,15 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<PageTitle>Spin Result</PageTitle>
+<PageTitle>@Translation.PageTitleResult</PageTitle>
 
 @if (spinData is null)
 {
     <div class="text-center py-5">
         <div class="glass-card d-inline-block p-4 p-md-5">
-            <h4 style="font-weight: 600;">Invalid spin link</h4>
-            <p style="color: var(--text-secondary);">The link is corrupt or expired.</p>
-            <a href="/" class="btn-glow" style="text-decoration: none;">Create a new spin</a>
+            <h4 style="font-weight: 600;">@Translation.InvalidLink</h4>
+            <p style="color: var(--text-secondary);">@Translation.LinkCorrupt</p>
+            <a href="/" class="btn-glow" style="text-decoration: none;">@Translation.CreateNewSpin</a>
         </div>
     </div>
 }
@@ -19,13 +19,44 @@ else
 {
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8 text-center">
+
+            @if (isSequential && !allRoundsComplete)
+            {
+                <div class="glass-card p-3 mb-3" style="font-size: 0.95rem;">
+                    <span style="color: var(--text-secondary);">@Translation.RoundLabel</span>
+                    <strong style="color: var(--accent-light);">@(currentRound + 1)</strong>
+                    <span style="color: var(--text-secondary);">@Translation.OfLabel @totalRounds</span>
+
+                    @if (revealedWinners.Count > 0)
+                    {
+                        <div class="mt-2" style="font-size: 0.85rem; color: var(--text-secondary);">
+                            @string.Format(Translation.AlreadyPicked, string.Join(", ", revealedWinners))
+                        </div>
+                    }
+                </div>
+            }
+
             @* Wheel canvas — pointers are drawn on the canvas itself *@
             <div class="wheel-wrapper mb-4">
                 <canvas id="wheelCanvas" width="500" height="500"
                         style="max-width: 100%; height: auto;"></canvas>
             </div>
 
-            @* Result section — hidden during animation, shown after *@
+            @* Sequential mode: round complete but not all rounds done *@
+            @if (isSequential && !roundInProgress && !allRoundsComplete && revealedWinners.Count > 0)
+            {
+                <div class="glass-card p-4 mt-3">
+                    <h3 style="font-weight: 700; font-size: 1.3rem; margin-bottom: 0.5rem;
+                               color: var(--success);">
+                        @string.Format(Translation.RoundWinner, revealedWinners[^1])
+                    </h3>
+                    <button @onclick="NextRound" class="btn-glow mt-2">
+                        @Translation.NextRound
+                    </button>
+                </div>
+            }
+
+            @* Result section — shown after all animations complete *@
             @if (animationComplete)
             {
                 <div class="glass-card p-4 mt-3">
@@ -33,31 +64,44 @@ else
                                background: linear-gradient(135deg, #34d399, #60a5fa);
                                -webkit-background-clip: text; -webkit-text-fill-color: transparent;
                                background-clip: text;">
-                        🎉 Selected!
+                        @Translation.Selected
                     </h3>
                     <ul class="result-list">
-                        @foreach (var name in spinData.Selected)
+                        @if (isSequential)
                         {
-                            <li>✅ @name</li>
+                            @foreach (var name in revealedWinners)
+                            {
+                                <li>✅ @name</li>
+                            }
+                        }
+                        else
+                        {
+                            @foreach (var name in spinData.Selected)
+                            {
+                                <li>✅ @name</li>
+                            }
                         }
                     </ul>
                 </div>
 
                 <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
                     <button @onclick="CopyLink" class="btn-ghost">
-                        📋 Copy link
+                        @Translation.CopyLinkButton
                     </button>
                     <button @onclick="SpinAgain" class="btn-ghost">
-                        🔄 Spin again
+                        @Translation.SpinAgainButton
+                    </button>
+                    <button @onclick="EditNames" class="btn-ghost">
+                        @Translation.EditNamesButton
                     </button>
                     <a href="/" class="btn-glow" style="text-decoration: none; font-size: 1rem; padding: 0.6rem 1.2rem;">
-                        🏠 New spin
+                        @Translation.NewSpinButton
                     </a>
                 </div>
 
                 @if (linkCopied)
                 {
-                    <div class="toast-copied mt-2"><small>Link copied!</small></div>
+                    <div class="toast-copied mt-2"><small>@Translation.LinkCopied</small></div>
                 }
             }
         </div>
@@ -74,11 +118,25 @@ else
     private bool linkCopied;
     private DotNetObjectReference<SpinResult>? dotNetRef;
 
+    // Sequential mode state
+    private bool isSequential;
+    private int currentRound;
+    private int totalRounds;
+    private bool roundInProgress;
+    private bool allRoundsComplete;
+    private List<string> revealedWinners = [];
+
     protected override void OnParametersSet()
     {
         animationComplete = false;
         linkCopied = false;
         needsAnimation = false;
+        isSequential = false;
+        currentRound = 0;
+        totalRounds = 0;
+        roundInProgress = false;
+        allRoundsComplete = false;
+        revealedWinners.Clear();
 
         if (string.IsNullOrEmpty(EncodedData))
         {
@@ -89,12 +147,17 @@ else
         try
         {
             spinData = SpinEncoder.Decode(EncodedData);
-            needsAnimation = true;
         }
         catch (FormatException)
         {
             spinData = null;
+            return;
         }
+
+        var uri = new Uri(Navigation.Uri);
+        isSequential = uri.Query.Contains("seq=true", StringComparison.OrdinalIgnoreCase);
+        totalRounds = spinData.Count;
+        needsAnimation = true;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -102,18 +165,47 @@ else
         if (!needsAnimation || spinData is null)
             return;
 
-        // Clear flag before await to prevent double-start
         needsAnimation = false;
 
-        // Dispose previous reference before creating a new one
         dotNetRef?.Dispose();
         dotNetRef = DotNetObjectReference.Create(this);
 
-        await JS.InvokeVoidAsync("WheelCanvas.startSpin",
-            "wheelCanvas",
-            spinData.Items,
-            spinData.SelectedIndices,
-            dotNetRef);
+        if (isSequential)
+        {
+            roundInProgress = true;
+            var (roundItems, winnerIdx) = GetRoundData(currentRound);
+            await JS.InvokeVoidAsync("WheelCanvas.startSpin",
+                "wheelCanvas", roundItems, winnerIdx, dotNetRef);
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("WheelCanvas.startSpin",
+                "wheelCanvas", spinData.Items, spinData.SelectedIndices, dotNetRef);
+        }
+    }
+
+    private (string[] items, int[] winnerIndex) GetRoundData(int roundIndex)
+    {
+        var revealOrder = spinData!.RevealOrderIndices ?? spinData.SelectedIndices;
+
+        // Indices of winners already revealed in previous rounds
+        var revealedSet = new HashSet<int>();
+        for (int i = 0; i < roundIndex; i++)
+            revealedSet.Add(revealOrder[i]);
+
+        var roundItems = new List<string>();
+        int winnerOriginalIndex = revealOrder[roundIndex];
+        int winnerRoundIndex = -1;
+
+        for (int i = 0; i < spinData.Items.Length; i++)
+        {
+            if (revealedSet.Contains(i)) continue;
+            if (i == winnerOriginalIndex)
+                winnerRoundIndex = roundItems.Count;
+            roundItems.Add(spinData.Items[i]);
+        }
+
+        return (roundItems.ToArray(), [winnerRoundIndex]);
     }
 
     /// <summary>
@@ -122,7 +214,31 @@ else
     [JSInvokable]
     public void OnSpinComplete()
     {
-        animationComplete = true;
+        if (isSequential)
+        {
+            roundInProgress = false;
+            var revealOrder = spinData!.RevealOrderIndices ?? spinData.SelectedIndices;
+            revealedWinners.Add(spinData.Items[revealOrder[currentRound]]);
+
+            if (currentRound + 1 >= totalRounds)
+            {
+                allRoundsComplete = true;
+                animationComplete = true;
+            }
+
+            StateHasChanged();
+        }
+        else
+        {
+            animationComplete = true;
+            StateHasChanged();
+        }
+    }
+
+    private void NextRound()
+    {
+        currentRound++;
+        needsAnimation = true;
         StateHasChanged();
     }
 
@@ -139,7 +255,17 @@ else
 
         var newResult = WheelSpinner.Spin(spinData.Items, spinData.Count);
         var encoded = SpinEncoder.Encode(newResult);
-        Navigation.NavigateTo($"/spin/{encoded}", forceLoad: false);
+        var seqParam = isSequential ? "?seq=true" : "";
+        Navigation.NavigateTo($"/spin/{encoded}{seqParam}", forceLoad: false);
+    }
+
+    private void EditNames()
+    {
+        if (spinData is null) return;
+
+        var itemsParam = Uri.EscapeDataString(string.Join("\n", spinData.Items));
+        var seqParam = isSequential ? "&seq=true" : "";
+        Navigation.NavigateTo($"/?items={itemsParam}&count={spinData.Count}{seqParam}");
     }
 
     public void Dispose()

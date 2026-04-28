@@ -1,35 +1,35 @@
 @page "/"
 @inject NavigationManager Navigation
 
-<PageTitle>Spin the Wheel</PageTitle>
+<PageTitle>@Translation.PageTitleHome</PageTitle>
 
 <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
         <div class="glass-card p-4 p-md-5">
-            <h2 style="font-weight: 600; margin-bottom: 1.5rem; font-size: 1.4rem;">Add your items</h2>
+            <h2 style="font-weight: 600; margin-bottom: 1.5rem; font-size: 1.4rem;">@Translation.AddYourItems</h2>
 
             <div class="mb-4">
                 <label for="itemsInput" class="form-label">
-                    Enter one item per line:
+                    @Translation.EnterOnePerLine
                 </label>
                 <textarea @bind="itemsText"
                           @bind:event="oninput"
                           id="itemsInput"
                           class="form-control"
                           rows="8"
-                          placeholder="@("Anna\nBo\nClara\nDavid\nEva\nFilip")"></textarea>
+                          placeholder="@Translation.PlaceholderNames"></textarea>
 
                 @if (Duplicates.Count > 0)
                 {
                     <div class="alert alert-warning mt-2 mb-0" role="alert">
-                        ⚠️ Duplicate items: @string.Join(", ", Duplicates)
+                        @string.Format(Translation.DuplicateWarning, string.Join(", ", Duplicates))
                     </div>
                 }
             </div>
 
             <div class="mb-4">
                 <label for="countInput" class="form-label">
-                    How many to pick:
+                    @Translation.HowManyToPick
                 </label>
                 <input type="number"
                        @bind="count"
@@ -39,6 +39,19 @@
                        max="@MaxCount"
                        style="max-width: 120px;" />
             </div>
+
+            @if (count > 1)
+            {
+                <div class="mb-4">
+                    <div class="form-check" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" @bind="oneAtATime" id="oneAtATimeCheck"
+                               class="form-check-input" style="width: 1.2em; height: 1.2em;" />
+                        <label for="oneAtATimeCheck" class="form-check-label" style="color: var(--text-secondary); font-weight: 500;">
+                            @Translation.OneAtATime
+                        </label>
+                    </div>
+                </div>
+            }
 
             @if (!string.IsNullOrEmpty(errorMessage))
             {
@@ -50,20 +63,44 @@
             <button @onclick="DoSpin"
                     class="btn-glow w-100"
                     disabled="@(!CanSpin)">
-                🎰 Spin!
+                @Translation.SpinButton
             </button>
 
             <div class="mt-3 text-center" style="color: var(--text-secondary); font-size: 0.85rem;">
-                @ParsedItems.Length items entered
+                @string.Format(Translation.ItemsEntered, ParsedItems.Length)
             </div>
         </div>
     </div>
 </div>
 
 @code {
-    private string itemsText = "Anna\nBo\nClara\nDavid\nEva\nFilip\nGreta";
+    private string itemsText = "";
     private int count = 2;
+    private bool oneAtATime;
     private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.Uri;
+        var queryIndex = uri.IndexOf('?');
+        if (queryIndex < 0) return;
+
+        var queryString = uri[(queryIndex + 1)..];
+        var pairs = queryString.Split('&', StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var pair in pairs)
+        {
+            var parts = pair.Split('=', 2);
+            if (parts.Length != 2) continue;
+
+            var key = Uri.UnescapeDataString(parts[0]);
+            var value = Uri.UnescapeDataString(parts[1]);
+
+            if (key == "items") itemsText = value;
+            else if (key == "count" && int.TryParse(value, out var c)) count = c;
+            else if (key == "seq" && value == "true") oneAtATime = true;
+        }
+    }
 
     private string[] ParsedItems => itemsText
         .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -90,25 +127,26 @@
 
         if (items.Length < 2)
         {
-            errorMessage = "Enter at least 2 items.";
+            errorMessage = Translation.ErrorMinItems;
             return;
         }
 
         if (count < 1 || count > items.Length)
         {
-            errorMessage = $"Pick count must be between 1 and {items.Length}.";
+            errorMessage = string.Format(Translation.ErrorPickCount, items.Length);
             return;
         }
 
         var duplicates = Duplicates;
         if (duplicates.Count > 0)
         {
-            errorMessage = $"Duplicate items: {string.Join(", ", duplicates)}";
+            errorMessage = string.Format(Translation.ErrorDuplicates, string.Join(", ", duplicates));
             return;
         }
 
         var result = WheelSpinner.Spin(items, count);
         var encoded = SpinEncoder.Encode(result);
-        Navigation.NavigateTo($"/spin/{encoded}");
+        var url = oneAtATime ? $"/spin/{encoded}?seq=true" : $"/spin/{encoded}";
+        Navigation.NavigateTo(url);
     }
 }

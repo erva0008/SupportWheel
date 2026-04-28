@@ -1,4 +1,4 @@
-using SupportWheel.Client.Services;
+using SupportWheel.Shared.Services;
 
 namespace SupportWheel.Client.Tests;
 
@@ -91,5 +91,34 @@ public class WheelSpinnerTests
         var result = WheelSpinner.Spin(SampleItems, 2);
 
         Assert.Same(SampleItems, result.Items);
+    }
+
+    [Fact]
+    public void Spin_RevealOrderIndices_ContainsSameValuesAsSelectedIndices()
+    {
+        var result = WheelSpinner.Spin(SampleItems, 3, new Random(42));
+
+        Assert.NotNull(result.RevealOrderIndices);
+        Assert.Equal(result.SelectedIndices.Length, result.RevealOrderIndices.Length);
+        Assert.Equal(
+            result.SelectedIndices.Order().ToArray(),
+            result.RevealOrderIndices.Order().ToArray());
+    }
+
+    [Fact]
+    public void Spin_RevealOrderIndices_MayDifferFromSelectedIndicesOrder()
+    {
+        // Run many seeds until we find one where draw order != sorted order
+        bool foundDifferent = false;
+        for (int seed = 0; seed < 100; seed++)
+        {
+            var result = WheelSpinner.Spin(SampleItems, 3, new Random(seed));
+            if (!result.RevealOrderIndices!.SequenceEqual(result.SelectedIndices))
+            {
+                foundDifferent = true;
+                break;
+            }
+        }
+        Assert.True(foundDifferent, "RevealOrderIndices should sometimes differ from sorted SelectedIndices");
     }
 }

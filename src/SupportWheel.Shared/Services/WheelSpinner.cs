@@ -1,6 +1,6 @@
-using SupportWheel.Client.Models;
+using SupportWheel.Shared.Models;
 
-namespace SupportWheel.Client.Services;
+namespace SupportWheel.Shared.Services;
 
 /// <summary>
 /// Selects N random items from a list without replacement using Fisher-Yates shuffle.
@@ -37,12 +37,14 @@ public static class WheelSpinner
         }
 
         var selected = indices[..count];
+        var revealOrder = selected.ToArray(); // Preserve draw order BEFORE sorting
         Array.Sort(selected); // Sort ascending for consistent display order
 
         return new SpinData
         {
             Items = items,
             SelectedIndices = selected,
+            RevealOrderIndices = revealOrder,
         };
     }
 }

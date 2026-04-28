@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SupportWheel.Client\SupportWheel.Client.csproj" />
+    <ProjectReference Include="..\..\src\SupportWheel.Shared\SupportWheel.Shared.csproj" />
   </ItemGroup>
 
 </Project>

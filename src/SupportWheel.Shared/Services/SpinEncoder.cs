@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SupportWheel.Client.Models;
+using SupportWheel.Shared.Models;
 
-namespace SupportWheel.Client.Services;
+namespace SupportWheel.Shared.Services;
 
 /// <summary>
 /// Encodes/decodes <see cref="SpinData"/> to/from base64url for URL state.
@@ -22,7 +22,7 @@ public static class SpinEncoder
     {
         ArgumentNullException.ThrowIfNull(data);
 
-        var dto = new SpinDto { I = data.Items, S = data.SelectedIndices };
+        var dto = new SpinDto { I = data.Items, S = data.SelectedIndices, R = data.RevealOrderIndices };
         var json = JsonSerializer.SerializeToUtf8Bytes(dto, JsonOptions);
         return ToBase64Url(json);
     }
@@ -80,10 +80,24 @@ public static class SpinEncoder
                 throw new FormatException($"Duplicate selected index: {dto.S[j]}.");
         }
 
+        // RevealOrderIndices is optional — old links won't have it
+        int[]? revealOrder = dto.R;
+        if (revealOrder is not null)
+        {
+            if (revealOrder.Length != dto.S.Length)
+                throw new FormatException("RevealOrderIndices length must match SelectedIndices length.");
+
+            var revealSet = new HashSet<int>(revealOrder);
+            var selectedSet = new HashSet<int>(dto.S);
+            if (!revealSet.SetEquals(selectedSet))
+                throw new FormatException("RevealOrderIndices must contain the same values as SelectedIndices.");
+        }
+
         return new SpinData
         {
             Items = dto.I,
             SelectedIndices = dto.S,
+            RevealOrderIndices = revealOrder,
         };
     }
 
@@ -121,5 +135,8 @@ public static class SpinEncoder
 
         [JsonPropertyName("s")]
         public int[]? S { get; set; }
+
+        [JsonPropertyName("r")]
+        public int[]? R { get; set; }
     }
 }

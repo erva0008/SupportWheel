@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>🎡 Snurra hjulet</value>
+  </data>
+  <data name="PageTitleHome" xml:space="preserve">
+    <value>Snurra hjulet</value>
+  </data>
+  <data name="PageTitleResult" xml:space="preserve">
+    <value>Resultat</value>
+  </data>
+  <data name="AddYourItems" xml:space="preserve">
+    <value>Lägg till alternativ</value>
+  </data>
+  <data name="EnterOnePerLine" xml:space="preserve">
+    <value>Ange ett alternativ per rad:</value>
+  </data>
+  <data name="PlaceholderNames" xml:space="preserve">
+    <value>Anna
+Bo
+Clara
+David
+Eva
+Filip</value>
+  </data>
+  <data name="DuplicateWarning" xml:space="preserve">
+    <value>⚠️ Dubbletter: {0}</value>
+  </data>
+  <data name="HowManyToPick" xml:space="preserve">
+    <value>Hur många ska väljas:</value>
+  </data>
+  <data name="ErrorMinItems" xml:space="preserve">
+    <value>Ange minst 2 alternativ.</value>
+  </data>
+  <data name="ErrorPickCount" xml:space="preserve">
+    <value>Antal måste vara mellan 1 och {0}.</value>
+  </data>
+  <data name="ErrorDuplicates" xml:space="preserve">
+    <value>Dubbletter: {0}</value>
+  </data>
+  <data name="SpinButton" xml:space="preserve">
+    <value>🎰 Snurra!</value>
+  </data>
+  <data name="ItemsEntered" xml:space="preserve">
+    <value>{0} alternativ</value>
+  </data>
+  <data name="OneAtATime" xml:space="preserve">
+    <value>🎲 En åt gången</value>
+  </data>
+  <data name="InvalidLink" xml:space="preserve">
+    <value>Ogiltig länk</value>
+  </data>
+  <data name="LinkCorrupt" xml:space="preserve">
+    <value>Länken är trasig eller utgången.</value>
+  </data>
+  <data name="CreateNewSpin" xml:space="preserve">
+    <value>Skapa ny snurrning</value>
+  </data>
+  <data name="RoundLabel" xml:space="preserve">
+    <value>Runda</value>
+  </data>
+  <data name="OfLabel" xml:space="preserve">
+    <value>av</value>
+  </data>
+  <data name="AlreadyPicked" xml:space="preserve">
+    <value>Redan valda: {0}</value>
+  </data>
+  <data name="RoundWinner" xml:space="preserve">
+    <value>🎉 {0}!</value>
+  </data>
+  <data name="NextRound" xml:space="preserve">
+    <value>🎲 Nästa runda!</value>
+  </data>
+  <data name="Selected" xml:space="preserve">
+    <value>🎉 Valda!</value>
+  </data>
+  <data name="CopyLinkButton" xml:space="preserve">
+    <value>📋 Kopiera länk</value>
+  </data>
+  <data name="SpinAgainButton" xml:space="preserve">
+    <value>🔄 Snurra igen</value>
+  </data>
+  <data name="EditNamesButton" xml:space="preserve">
+    <value>✏️ Ändra namn</value>
+  </data>
+  <data name="NewSpinButton" xml:space="preserve">
+    <value>🏠 Ny snurrning</value>
+  </data>
+  <data name="LinkCopied" xml:space="preserve">
+    <value>Länk kopierad!</value>
+  </data>
+</root>

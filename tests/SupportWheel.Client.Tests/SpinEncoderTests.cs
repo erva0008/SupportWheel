@@ -1,5 +1,5 @@
-using SupportWheel.Client.Models;
-using SupportWheel.Client.Services;
+using SupportWheel.Shared.Models;
+using SupportWheel.Shared.Services;
 
 namespace SupportWheel.Client.Tests;
 
@@ -108,5 +108,37 @@ public class SpinEncoderTests
         Assert.DoesNotContain("=", encoded);
         Assert.DoesNotContain("+", encoded);
         Assert.DoesNotContain("/", encoded);
+    }
+
+    [Fact]
+    public void Encode_Decode_RoundTrip_WithRevealOrderIndices()
+    {
+        var original = new SpinData
+        {
+            Items = ["Anna", "Bo", "Clara", "David"],
+            SelectedIndices = [0, 2, 3],
+            RevealOrderIndices = [3, 0, 2],
+        };
+
+        var encoded = SpinEncoder.Encode(original);
+        var decoded = SpinEncoder.Decode(encoded);
+
+        Assert.Equal(original.Items, decoded.Items);
+        Assert.Equal(original.SelectedIndices, decoded.SelectedIndices);
+        Assert.Equal(original.RevealOrderIndices, decoded.RevealOrderIndices);
+    }
+
+    [Fact]
+    public void Decode_WithoutRevealOrder_BackwardCompatible()
+    {
+        // Old format without "r" field
+        var json = """{"i":["A","B","C"],"s":[0,2]}"""u8.ToArray();
+        var encoded = Convert.ToBase64String(json).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+
+        var decoded = SpinEncoder.Decode(encoded);
+
+        Assert.Equal(["A", "B", "C"], decoded.Items);
+        Assert.Equal([0, 2], decoded.SelectedIndices);
+        Assert.Null(decoded.RevealOrderIndices);
     }
 }
