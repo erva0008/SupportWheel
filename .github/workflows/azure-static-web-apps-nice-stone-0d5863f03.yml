@@ -31,8 +31,20 @@ jobs:
           dotnet-version: '10.0.x'
           dotnet-quality: 'preview'
 
+      - name: Set version
+        id: version
+        run: |
+          VERSION="1.0.${{ github.run_number }}"
+          BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build_date=$BUILD_DATE" >> "$GITHUB_OUTPUT"
+
       - name: Publish Client
-        run: dotnet publish src/SupportWheel.Client -c Release -o ./publish/client
+        run: |
+          dotnet publish src/SupportWheel.Client -c Release -o ./publish/client \
+            -p:Version=${{ steps.version.outputs.version }} \
+            -p:InformationalVersion="${{ steps.version.outputs.version }}" \
+            -p:BuildDate="${{ steps.version.outputs.build_date }}"
 
       - name: Publish API
         run: dotnet publish src/SupportWheel.Api -c Release -o ./publish/api

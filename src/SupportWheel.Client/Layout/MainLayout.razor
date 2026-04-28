@@ -1,8 +1,9 @@
 @inherits LayoutComponentBase
 @using System.Globalization
 @using SupportWheel.Client.Resources
+@using SupportWheel.Client.Services
 @inject IJSRuntime JS
-@inject CultureState CultureState
+@inject NavigationManager Navigation
 
 <div class="container py-5 page-enter" style="max-width: 720px;">
     <header class="text-center mb-5 header-grid">
@@ -28,6 +29,10 @@
     <main>
         @Body
     </main>
+
+    <footer class="text-center mt-4" style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.5;">
+        v@(AppInfo.Version) · @(AppInfo.DotNetVersion) · @FormatBuildDate()
+    </footer>
 </div>
 
 <style>
@@ -59,16 +64,14 @@
     private async Task ToggleLanguageAsync()
     {
         var newLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "sv" ? "en" : "sv";
-        var culture = new CultureInfo(newLang);
-
-        CultureInfo.DefaultThreadCurrentCulture = culture;
-        CultureInfo.DefaultThreadCurrentUICulture = culture;
-        CultureInfo.CurrentCulture = culture;
-        CultureInfo.CurrentUICulture = culture;
-
         await JS.InvokeVoidAsync("localStorage.setItem", "supportwheel-lang", newLang);
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
 
-        CultureState.NotifyCultureChanged();
-        await InvokeAsync(StateHasChanged);
+    private static string FormatBuildDate()
+    {
+        if (DateTimeOffset.TryParse(AppInfo.BuildDate, out var date))
+            return date.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+        return AppInfo.BuildDate;
     }
 }
