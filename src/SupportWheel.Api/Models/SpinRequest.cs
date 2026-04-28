@@ -4,4 +4,5 @@ public sealed record SpinRequest
 {
     public string[]? Items { get; init; }
     public int Count { get; init; }
+    public string? BaseUrl { get; init; }
 }

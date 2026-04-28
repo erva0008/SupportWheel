@@ -43,14 +43,15 @@ public sealed class SpinFunction
         var spinData = WheelSpinner.Spin(request.Items, request.Count);
         var encoded = SpinEncoder.Encode(spinData);
 
-        var scheme = req.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? req.Scheme;
-        var host = req.Headers["X-Forwarded-Host"].FirstOrDefault() ?? req.Host.ToString();
+        var baseUrl = !string.IsNullOrWhiteSpace(request.BaseUrl)
+            ? request.BaseUrl.TrimEnd('/')
+            : $"{req.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? req.Scheme}://{req.Headers["X-Forwarded-Host"].FirstOrDefault() ?? req.Host.ToString()}";
 
         return new OkObjectResult(new
         {
             selected = spinData.Selected,
             selectedIndices = spinData.SelectedIndices,
-            spinUrl = $"{scheme}://{host}/spin/{encoded}",
+            spinUrl = $"{baseUrl}/spin/{encoded}",
         });
     }
 }

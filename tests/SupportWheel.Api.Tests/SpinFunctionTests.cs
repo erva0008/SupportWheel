@@ -104,6 +104,33 @@ public class SpinFunctionTests
     }
 
     [Fact]
+    public async Task SpinUrl_UsesBaseUrl_WhenProvided()
+    {
+        var result = await CallSpin(new { items = TwelveItems, count = 2, baseUrl = "https://www.snurrahjulet.se" });
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var json = SerializeAnonymous(ok.Value!);
+        var spinUrl = json.GetProperty("spinUrl").GetString();
+
+        Assert.NotNull(spinUrl);
+        Assert.StartsWith("https://www.snurrahjulet.se/spin/", spinUrl);
+    }
+
+    [Fact]
+    public async Task SpinUrl_TrimsTrailingSlashFromBaseUrl()
+    {
+        var result = await CallSpin(new { items = TwelveItems, count = 2, baseUrl = "https://www.snurrahjulet.se/" });
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var json = SerializeAnonymous(ok.Value!);
+        var spinUrl = json.GetProperty("spinUrl").GetString();
+
+        Assert.NotNull(spinUrl);
+        Assert.StartsWith("https://www.snurrahjulet.se/spin/", spinUrl);
+        Assert.DoesNotContain("//spin/", spinUrl);
+    }
+
+    [Fact]
     public async Task SelectedItems_ExistInOriginalList()
     {
         var result = await CallSpin(new { items = TwelveItems, count = 4 });
