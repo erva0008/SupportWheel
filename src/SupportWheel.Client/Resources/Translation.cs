@@ -24,7 +24,7 @@ public static class Translation
     public static string PageTitleHome => GetString(nameof(PageTitleHome));
     public static string AddYourItems => GetString(nameof(AddYourItems));
     public static string EnterOnePerLine => GetString(nameof(EnterOnePerLine));
-    public static string PlaceholderNames => GetString(nameof(PlaceholderNames));
+    public static string PlaceholderItems => GetString(nameof(PlaceholderItems));
     public static string DuplicateWarning => GetString(nameof(DuplicateWarning));
     public static string HowManyToPick => GetString(nameof(HowManyToPick));
     public static string ErrorMinItems => GetString(nameof(ErrorMinItems));
@@ -47,7 +47,17 @@ public static class Translation
     public static string Selected => GetString(nameof(Selected));
     public static string CopyLinkButton => GetString(nameof(CopyLinkButton));
     public static string SpinAgainButton => GetString(nameof(SpinAgainButton));
-    public static string EditNamesButton => GetString(nameof(EditNamesButton));
+    public static string EditItemsButton => GetString(nameof(EditItemsButton));
     public static string NewSpinButton => GetString(nameof(NewSpinButton));
     public static string LinkCopied => GetString(nameof(LinkCopied));
+
+    // Saved wheels
+    public static string MyWheels => GetString(nameof(MyWheels));
+    public static string NoSavedWheels => GetString(nameof(NoSavedWheels));
+    public static string SaveWheel => GetString(nameof(SaveWheel));
+    public static string SaveWheelPrompt => GetString(nameof(SaveWheelPrompt));
+    public static string LoadWheel => GetString(nameof(LoadWheel));
+    public static string DeleteWheel => GetString(nameof(DeleteWheel));
+    public static string WheelSaved => GetString(nameof(WheelSaved));
+    public static string ItemCount => GetString(nameof(ItemCount));
 }

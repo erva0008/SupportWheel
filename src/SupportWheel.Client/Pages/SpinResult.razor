@@ -2,6 +2,8 @@
 @implements IDisposable
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject CultureState CultureState
+@inject SavedWheelService SavedWheelService
 
 <PageTitle>@Translation.PageTitleResult</PageTitle>
 
@@ -91,8 +93,11 @@ else
                     <button @onclick="SpinAgain" class="btn-ghost">
                         @Translation.SpinAgainButton
                     </button>
-                    <button @onclick="EditNames" class="btn-ghost">
-                        @Translation.EditNamesButton
+                    <button @onclick="SaveWheel" class="btn-ghost">
+                        @Translation.SaveWheel
+                    </button>
+                    <button @onclick="EditItems" class="btn-ghost">
+                        @Translation.EditItemsButton
                     </button>
                     <a href="/" class="btn-glow" style="text-decoration: none; font-size: 1rem; padding: 0.6rem 1.2rem;">
                         @Translation.NewSpinButton
@@ -102,6 +107,10 @@ else
                 @if (linkCopied)
                 {
                     <div class="toast-copied mt-2"><small>@Translation.LinkCopied</small></div>
+                }
+                @if (wheelSaved)
+                {
+                    <div class="toast-copied mt-2"><small>@Translation.WheelSaved</small></div>
                 }
             }
         </div>
@@ -116,7 +125,9 @@ else
     private bool animationComplete;
     private bool needsAnimation;
     private bool linkCopied;
+    private bool wheelSaved;
     private DotNetObjectReference<SpinResult>? dotNetRef;
+    private System.Threading.Timer? toastTimer;
 
     // Sequential mode state
     private bool isSequential;
@@ -126,10 +137,18 @@ else
     private bool allRoundsComplete;
     private List<string> revealedWinners = [];
 
+    protected override void OnInitialized()
+    {
+        CultureState.OnCultureChanged += OnCultureChanged;
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
     protected override void OnParametersSet()
     {
         animationComplete = false;
         linkCopied = false;
+        wheelSaved = false;
         needsAnimation = false;
         isSequential = false;
         currentRound = 0;
@@ -259,7 +278,7 @@ else
         Navigation.NavigateTo($"/spin/{encoded}{seqParam}", forceLoad: false);
     }
 
-    private void EditNames()
+    private void EditItems()
     {
         if (spinData is null) return;
 
@@ -268,8 +287,37 @@ else
         Navigation.NavigateTo($"/?items={itemsParam}&count={spinData.Count}{seqParam}");
     }
 
+    private async Task SaveWheel()
+    {
+        if (spinData is null) return;
+
+        var name = await JS.InvokeAsync<string?>("prompt", Translation.SaveWheelPrompt);
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var wheel = new SavedWheel
+        {
+            Name = name.Trim(),
+            Items = spinData.Items,
+            PickCount = spinData.Count
+        };
+
+        await SavedWheelService.SaveAsync(wheel);
+
+        wheelSaved = true;
+        StateHasChanged();
+
+        toastTimer?.Dispose();
+        toastTimer = new System.Threading.Timer(_ =>
+        {
+            wheelSaved = false;
+            InvokeAsync(StateHasChanged);
+        }, null, 2000, Timeout.Infinite);
+    }
+
     public void Dispose()
     {
+        CultureState.OnCultureChanged -= OnCultureChanged;
         dotNetRef?.Dispose();
+        toastTimer?.Dispose();
     }
 }

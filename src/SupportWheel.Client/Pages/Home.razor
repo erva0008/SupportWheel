@@ -1,10 +1,35 @@
 @page "/"
+@implements IDisposable
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject CultureState CultureState
+@inject SavedWheelService SavedWheelService
 
 <PageTitle>@Translation.PageTitleHome</PageTitle>
 
 <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
+
+        @if (savedWheels.Count > 0)
+        {
+            <div class="glass-card p-4 mb-4">
+                <h2 style="font-weight: 600; font-size: 1.2rem; margin-bottom: 1rem;">@Translation.MyWheels</h2>
+                @foreach (var wheel in savedWheels)
+                {
+                    <div class="saved-wheel-item">
+                        <div>
+                            <strong>@wheel.Name</strong>
+                            <small>@string.Format(Translation.ItemCount, wheel.Items.Length)</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn-ghost btn-sm" @onclick="() => LoadWheel(wheel)">@Translation.LoadWheel</button>
+                            <button class="btn-ghost btn-sm" style="color: var(--danger);" @onclick="() => DeleteWheel(wheel.Id)">@Translation.DeleteWheel</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
         <div class="glass-card p-4 p-md-5">
             <h2 style="font-weight: 600; margin-bottom: 1.5rem; font-size: 1.4rem;">@Translation.AddYourItems</h2>
 
@@ -17,7 +42,7 @@
                           id="itemsInput"
                           class="form-control"
                           rows="8"
-                          placeholder="@Translation.PlaceholderNames"></textarea>
+                          placeholder="@Translation.PlaceholderItems"></textarea>
 
                 @if (Duplicates.Count > 0)
                 {
@@ -66,9 +91,21 @@
                 @Translation.SpinButton
             </button>
 
+            @if (CanSpin)
+            {
+                <button @onclick="SaveCurrentWheel" class="btn-ghost w-100 mt-2">
+                    @Translation.SaveWheel
+                </button>
+            }
+
             <div class="mt-3 text-center" style="color: var(--text-secondary); font-size: 0.85rem;">
                 @string.Format(Translation.ItemsEntered, ParsedItems.Length)
             </div>
+
+            @if (wheelSaved)
+            {
+                <div class="toast-copied mt-2 text-center"><small>@Translation.WheelSaved</small></div>
+            }
         </div>
     </div>
 </div>
@@ -78,9 +115,14 @@
     private int count = 2;
     private bool oneAtATime;
     private string? errorMessage;
+    private List<SavedWheel> savedWheels = [];
+    private bool wheelSaved;
+    private System.Threading.Timer? toastTimer;
 
     protected override void OnInitialized()
     {
+        CultureState.OnCultureChanged += OnCultureChanged;
+
         var uri = Navigation.Uri;
         var queryIndex = uri.IndexOf('?');
         if (queryIndex < 0) return;
@@ -101,6 +143,13 @@
             else if (key == "seq" && value == "true") oneAtATime = true;
         }
     }
+
+    protected override async Task OnInitializedAsync()
+    {
+        savedWheels = await SavedWheelService.GetAllAsync();
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
 
     private string[] ParsedItems => itemsText
         .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -148,5 +197,49 @@
         var encoded = SpinEncoder.Encode(result);
         var url = oneAtATime ? $"/spin/{encoded}?seq=true" : $"/spin/{encoded}";
         Navigation.NavigateTo(url);
+    }
+
+    private async Task SaveCurrentWheel()
+    {
+        var name = await JS.InvokeAsync<string?>("prompt", Translation.SaveWheelPrompt);
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var wheel = new SavedWheel
+        {
+            Name = name.Trim(),
+            Items = ParsedItems,
+            PickCount = count
+        };
+
+        await SavedWheelService.SaveAsync(wheel);
+        savedWheels = await SavedWheelService.GetAllAsync();
+
+        wheelSaved = true;
+        StateHasChanged();
+
+        toastTimer?.Dispose();
+        toastTimer = new System.Threading.Timer(_ =>
+        {
+            wheelSaved = false;
+            InvokeAsync(StateHasChanged);
+        }, null, 2000, Timeout.Infinite);
+    }
+
+    private void LoadWheel(SavedWheel wheel)
+    {
+        itemsText = string.Join("\n", wheel.Items);
+        count = wheel.PickCount;
+    }
+
+    private async Task DeleteWheel(string id)
+    {
+        await SavedWheelService.DeleteAsync(id);
+        savedWheels = await SavedWheelService.GetAllAsync();
+    }
+
+    public void Dispose()
+    {
+        CultureState.OnCultureChanged -= OnCultureChanged;
+        toastTimer?.Dispose();
     }
 }

@@ -64,13 +64,13 @@
   <data name="EnterOnePerLine" xml:space="preserve">
     <value>Ange ett alternativ per rad:</value>
   </data>
-  <data name="PlaceholderNames" xml:space="preserve">
-    <value>Anna
-Bo
-Clara
-David
-Eva
-Filip</value>
+  <data name="PlaceholderItems" xml:space="preserve">
+    <value>Pizza
+Tacos
+Sushi
+Pad thai
+Hamburgare
+Lasagne</value>
   </data>
   <data name="DuplicateWarning" xml:space="preserve">
     <value>⚠️ Dubbletter: {0}</value>
@@ -129,8 +129,8 @@ Filip</value>
   <data name="SpinAgainButton" xml:space="preserve">
     <value>🔄 Snurra igen</value>
   </data>
-  <data name="EditNamesButton" xml:space="preserve">
-    <value>✏️ Ändra namn</value>
+  <data name="EditItemsButton" xml:space="preserve">
+    <value>✏️ Ändra alternativ</value>
   </data>
   <data name="NewSpinButton" xml:space="preserve">
     <value>🏠 Ny snurrning</value>
@@ -143,5 +143,29 @@ Filip</value>
   </data>
   <data name="SwitchToSwedish" xml:space="preserve">
     <value>Svenska</value>
+  </data>
+  <data name="MyWheels" xml:space="preserve">
+    <value>Mina hjul</value>
+  </data>
+  <data name="NoSavedWheels" xml:space="preserve">
+    <value>Inga sparade hjul</value>
+  </data>
+  <data name="SaveWheel" xml:space="preserve">
+    <value>💾 Spara hjul</value>
+  </data>
+  <data name="SaveWheelPrompt" xml:space="preserve">
+    <value>Namn på hjulet:</value>
+  </data>
+  <data name="LoadWheel" xml:space="preserve">
+    <value>Ladda</value>
+  </data>
+  <data name="DeleteWheel" xml:space="preserve">
+    <value>Ta bort</value>
+  </data>
+  <data name="WheelSaved" xml:space="preserve">
+    <value>Hjul sparat!</value>
+  </data>
+  <data name="ItemCount" xml:space="preserve">
+    <value>{0} alternativ</value>
   </data>
 </root>

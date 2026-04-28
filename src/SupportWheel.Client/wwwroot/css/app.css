@@ -333,6 +333,25 @@ code {
     text-align: start;
 }
 
+/* ===== Saved wheel items ===== */
+.saved-wheel-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--glass-border);
+    gap: 0.5rem;
+}
+
+.saved-wheel-item:last-child {
+    border-bottom: none;
+}
+
+.btn-sm {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+}
+
 /* ===== Scrollbar (Webkit) ===== */
 ::-webkit-scrollbar {
     width: 8px;
