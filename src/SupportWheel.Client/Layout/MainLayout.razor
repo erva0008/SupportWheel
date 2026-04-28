@@ -69,6 +69,6 @@
         await JS.InvokeVoidAsync("localStorage.setItem", "supportwheel-lang", newLang);
 
         CultureState.NotifyCultureChanged();
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 }

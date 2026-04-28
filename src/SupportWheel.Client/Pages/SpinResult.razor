@@ -93,9 +93,12 @@ else
                     <button @onclick="SpinAgain" class="btn-ghost">
                         @Translation.SpinAgainButton
                     </button>
-                    <button @onclick="SaveWheel" class="btn-ghost">
-                        @Translation.SaveWheel
-                    </button>
+                    @if (!showSaveInput)
+                    {
+                        <button @onclick="BeginSave" class="btn-ghost">
+                            @Translation.SaveWheel
+                        </button>
+                    }
                     <button @onclick="EditItems" class="btn-ghost">
                         @Translation.EditItemsButton
                     </button>
@@ -103,6 +106,23 @@ else
                         @Translation.NewSpinButton
                     </a>
                 </div>
+
+                @if (showSaveInput)
+                {
+                    <div class="d-flex gap-2 mt-3 align-items-center justify-content-center">
+                        <input @bind="saveWheelName" @bind:event="oninput"
+                               class="form-control" style="max-width: 250px;"
+                               placeholder="@Translation.SaveWheelPrompt"
+                               @onkeydown="HandleSaveKeyDown" />
+                        <button class="btn-ghost btn-sm" @onclick="ConfirmSaveWheel"
+                                disabled="@(string.IsNullOrWhiteSpace(saveWheelName))">
+                            ✓
+                        </button>
+                        <button class="btn-ghost btn-sm" @onclick="CancelSave">
+                            ✕
+                        </button>
+                    </div>
+                }
 
                 @if (linkCopied)
                 {
@@ -126,6 +146,8 @@ else
     private bool needsAnimation;
     private bool linkCopied;
     private bool wheelSaved;
+    private bool showSaveInput;
+    private string saveWheelName = "";
     private DotNetObjectReference<SpinResult>? dotNetRef;
     private System.Threading.Timer? toastTimer;
 
@@ -149,6 +171,8 @@ else
         animationComplete = false;
         linkCopied = false;
         wheelSaved = false;
+        showSaveInput = false;
+        saveWheelName = "";
         needsAnimation = false;
         isSequential = false;
         currentRound = 0;
@@ -287,22 +311,41 @@ else
         Navigation.NavigateTo($"/?items={itemsParam}&count={spinData.Count}{seqParam}");
     }
 
-    private async Task SaveWheel()
+    private void BeginSave()
     {
-        if (spinData is null) return;
+        showSaveInput = true;
+        saveWheelName = "";
+    }
 
-        var name = await JS.InvokeAsync<string?>("prompt", Translation.SaveWheelPrompt);
-        if (string.IsNullOrWhiteSpace(name)) return;
+    private void CancelSave()
+    {
+        showSaveInput = false;
+        saveWheelName = "";
+    }
+
+    private async Task HandleSaveKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await ConfirmSaveWheel();
+        else if (e.Key == "Escape")
+            CancelSave();
+    }
+
+    private async Task ConfirmSaveWheel()
+    {
+        if (spinData is null || string.IsNullOrWhiteSpace(saveWheelName)) return;
 
         var wheel = new SavedWheel
         {
-            Name = name.Trim(),
+            Name = saveWheelName.Trim(),
             Items = spinData.Items,
             PickCount = spinData.Count
         };
 
         await SavedWheelService.SaveAsync(wheel);
 
+        showSaveInput = false;
+        saveWheelName = "";
         wheelSaved = true;
         StateHasChanged();
 

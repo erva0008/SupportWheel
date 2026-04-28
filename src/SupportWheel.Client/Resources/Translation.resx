@@ -65,12 +65,12 @@
     <value>Ange ett alternativ per rad:</value>
   </data>
   <data name="PlaceholderItems" xml:space="preserve">
-    <value>Pizza
+    <value>Anna
 Tacos
-Sushi
-Pad thai
-Hamburgare
-Lasagne</value>
+Filmkväll
+Bo
+Pizza
+Bowling</value>
   </data>
   <data name="DuplicateWarning" xml:space="preserve">
     <value>⚠️ Dubbletter: {0}</value>

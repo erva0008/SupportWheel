@@ -1,7 +1,6 @@
 @page "/"
 @implements IDisposable
 @inject NavigationManager Navigation
-@inject IJSRuntime JS
 @inject CultureState CultureState
 @inject SavedWheelService SavedWheelService
 
@@ -9,26 +8,6 @@
 
 <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
-
-        @if (savedWheels.Count > 0)
-        {
-            <div class="glass-card p-4 mb-4">
-                <h2 style="font-weight: 600; font-size: 1.2rem; margin-bottom: 1rem;">@Translation.MyWheels</h2>
-                @foreach (var wheel in savedWheels)
-                {
-                    <div class="saved-wheel-item">
-                        <div>
-                            <strong>@wheel.Name</strong>
-                            <small>@string.Format(Translation.ItemCount, wheel.Items.Length)</small>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn-ghost btn-sm" @onclick="() => LoadWheel(wheel)">@Translation.LoadWheel</button>
-                            <button class="btn-ghost btn-sm" style="color: var(--danger);" @onclick="() => DeleteWheel(wheel.Id)">@Translation.DeleteWheel</button>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
 
         <div class="glass-card p-4 p-md-5">
             <h2 style="font-weight: 600; margin-bottom: 1.5rem; font-size: 1.4rem;">@Translation.AddYourItems</h2>
@@ -91,11 +70,28 @@
                 @Translation.SpinButton
             </button>
 
-            @if (CanSpin)
+            @if (CanSpin && !showSaveInput)
             {
-                <button @onclick="SaveCurrentWheel" class="btn-ghost w-100 mt-2">
+                <button @onclick="BeginSave" class="btn-ghost w-100 mt-2">
                     @Translation.SaveWheel
                 </button>
+            }
+
+            @if (showSaveInput)
+            {
+                <div class="d-flex gap-2 mt-2 align-items-center">
+                    <input @bind="saveWheelName" @bind:event="oninput"
+                           class="form-control" style="max-width: 250px;"
+                           placeholder="@Translation.SaveWheelPrompt"
+                           @onkeydown="HandleSaveKeyDown" />
+                    <button class="btn-ghost btn-sm" @onclick="ConfirmSaveWheel"
+                            disabled="@(string.IsNullOrWhiteSpace(saveWheelName))">
+                        ✓
+                    </button>
+                    <button class="btn-ghost btn-sm" @onclick="CancelSave">
+                        ✕
+                    </button>
+                </div>
             }
 
             <div class="mt-3 text-center" style="color: var(--text-secondary); font-size: 0.85rem;">
@@ -107,6 +103,27 @@
                 <div class="toast-copied mt-2 text-center"><small>@Translation.WheelSaved</small></div>
             }
         </div>
+
+        @if (savedWheels.Count > 0)
+        {
+            <div class="glass-card p-4 mt-4">
+                <h2 style="font-weight: 600; font-size: 1.2rem; margin-bottom: 1rem;">@Translation.MyWheels</h2>
+                @foreach (var wheel in savedWheels)
+                {
+                    <div class="saved-wheel-item">
+                        <div>
+                            <strong>@wheel.Name</strong>
+                            <small>@string.Format(Translation.ItemCount, wheel.Items.Length)</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn-ghost btn-sm" @onclick="() => LoadWheel(wheel)">@Translation.LoadWheel</button>
+                            <button class="btn-ghost btn-sm" style="color: var(--danger);" @onclick="() => DeleteWheel(wheel.Id)">@Translation.DeleteWheel</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
     </div>
 </div>
 
@@ -117,6 +134,8 @@
     private string? errorMessage;
     private List<SavedWheel> savedWheels = [];
     private bool wheelSaved;
+    private bool showSaveInput;
+    private string saveWheelName = "";
     private System.Threading.Timer? toastTimer;
 
     protected override void OnInitialized()
@@ -199,14 +218,33 @@
         Navigation.NavigateTo(url);
     }
 
-    private async Task SaveCurrentWheel()
+    private void BeginSave()
     {
-        var name = await JS.InvokeAsync<string?>("prompt", Translation.SaveWheelPrompt);
-        if (string.IsNullOrWhiteSpace(name)) return;
+        showSaveInput = true;
+        saveWheelName = "";
+    }
+
+    private void CancelSave()
+    {
+        showSaveInput = false;
+        saveWheelName = "";
+    }
+
+    private async Task HandleSaveKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await ConfirmSaveWheel();
+        else if (e.Key == "Escape")
+            CancelSave();
+    }
+
+    private async Task ConfirmSaveWheel()
+    {
+        if (string.IsNullOrWhiteSpace(saveWheelName)) return;
 
         var wheel = new SavedWheel
         {
-            Name = name.Trim(),
+            Name = saveWheelName.Trim(),
             Items = ParsedItems,
             PickCount = count
         };
@@ -214,6 +252,8 @@
         await SavedWheelService.SaveAsync(wheel);
         savedWheels = await SavedWheelService.GetAllAsync();
 
+        showSaveInput = false;
+        saveWheelName = "";
         wheelSaved = true;
         StateHasChanged();
 

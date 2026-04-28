@@ -65,12 +65,12 @@
     <value>Enter one item per line:</value>
   </data>
   <data name="PlaceholderItems" xml:space="preserve">
-    <value>Pizza
+    <value>Anna
 Tacos
-Sushi
-Pad Thai
-Burgers
-Lasagna</value>
+Movie night
+Bo
+Pizza
+Bowling</value>
   </data>
   <data name="DuplicateWarning" xml:space="preserve">
     <value>⚠️ Duplicate items: {0}</value>
