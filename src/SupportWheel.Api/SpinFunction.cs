@@ -47,7 +47,7 @@ public sealed class SpinFunction
         {
             selected = spinData.Selected,
             selectedIndices = spinData.SelectedIndices,
-            spinUrl = $"/spin/{encoded}",
+            spinUrl = $"{req.Scheme}://{req.Host}/spin/{encoded}",
         });
     }
 }

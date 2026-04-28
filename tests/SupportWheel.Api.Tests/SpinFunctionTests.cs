@@ -28,7 +28,7 @@ public class SpinFunctionTests
 
         Assert.Equal(4, json.GetProperty("selected").GetArrayLength());
         Assert.Equal(4, json.GetProperty("selectedIndices").GetArrayLength());
-        Assert.StartsWith("/spin/", json.GetProperty("spinUrl").GetString());
+        Assert.StartsWith("https://localhost/spin/", json.GetProperty("spinUrl").GetString());
     }
 
     [Fact]
@@ -83,8 +83,8 @@ public class SpinFunctionTests
         var spinUrl = json.GetProperty("spinUrl").GetString();
 
         Assert.NotNull(spinUrl);
-        Assert.StartsWith("/spin/", spinUrl);
-        Assert.True(spinUrl.Length > "/spin/".Length, "spinUrl should contain encoded data after prefix.");
+        Assert.StartsWith("https://localhost/spin/", spinUrl);
+        Assert.True(spinUrl.Length > "https://localhost/spin/".Length, "spinUrl should contain encoded data after prefix.");
     }
 
     [Fact]
@@ -108,6 +108,8 @@ public class SpinFunctionTests
     {
         var json = JsonSerializer.SerializeToUtf8Bytes(body, JsonOptions);
         var context = new DefaultHttpContext();
+        context.Request.Scheme = "https";
+        context.Request.Host = new HostString("localhost");
         context.Request.ContentType = "application/json";
         context.Request.Body = new MemoryStream(json);
 
