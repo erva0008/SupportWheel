@@ -88,6 +88,22 @@ public class SpinFunctionTests
     }
 
     [Fact]
+    public async Task SpinUrl_UsesForwardedHeaders_WhenPresent()
+    {
+        var result = await CallSpin(
+            new { items = TwelveItems, count = 2 },
+            forwardedProto: "https",
+            forwardedHost: "www.snurrahjulet.se");
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var json = SerializeAnonymous(ok.Value!);
+        var spinUrl = json.GetProperty("spinUrl").GetString();
+
+        Assert.NotNull(spinUrl);
+        Assert.StartsWith("https://www.snurrahjulet.se/spin/", spinUrl);
+    }
+
+    [Fact]
     public async Task SelectedItems_ExistInOriginalList()
     {
         var result = await CallSpin(new { items = TwelveItems, count = 4 });
@@ -104,7 +120,10 @@ public class SpinFunctionTests
         Assert.Equal(selected.Distinct().Count(), selected.Length);
     }
 
-    private async Task<IActionResult> CallSpin(object body)
+    private async Task<IActionResult> CallSpin(
+        object body,
+        string? forwardedProto = null,
+        string? forwardedHost = null)
     {
         var json = JsonSerializer.SerializeToUtf8Bytes(body, JsonOptions);
         var context = new DefaultHttpContext();
@@ -112,6 +131,12 @@ public class SpinFunctionTests
         context.Request.Host = new HostString("localhost");
         context.Request.ContentType = "application/json";
         context.Request.Body = new MemoryStream(json);
+
+        if (forwardedProto is not null)
+            context.Request.Headers["X-Forwarded-Proto"] = forwardedProto;
+
+        if (forwardedHost is not null)
+            context.Request.Headers["X-Forwarded-Host"] = forwardedHost;
 
         return await _sut.Run(context.Request);
     }
