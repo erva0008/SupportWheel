@@ -102,12 +102,17 @@
             <h3 style="font-weight: 600; font-size: 1.2rem; margin-bottom: 1rem;">@Translation.ApiExamplesTitle</h3>
 
             <div class="code-block">
-                <div class="code-label">curl</div>
+                <div class="code-label">curl (bash/Linux/macOS)</div>
                 <code>@CurlExample</code>
             </div>
 
             <div class="code-block" style="margin-top: 1rem;">
-                <div class="code-label">PowerShell</div>
+                <div class="code-label">curl (Windows/PowerShell)</div>
+                <code>@CurlWindowsExample</code>
+            </div>
+
+            <div class="code-block" style="margin-top: 1rem;">
+                <div class="code-label">PowerShell (Invoke-RestMethod)</div>
                 <code>@PowerShellExample</code>
             </div>
         </div>
@@ -152,19 +157,30 @@
         """;
 
     private static readonly string CurlExample =
-        "curl -X POST " + ApiUrl + @" \
-  -H ""Content-Type: application/json"" \
-  -d '{""items"":[""Anna"",""Bo"",""Carl"",""Diana""],""count"":2,""baseUrl"":""" + AppUrl + @"""}'";
+        """
+        curl -X POST https://www.snurrahjulet.se/api/spin \
+          -H "Content-Type: application/json" \
+          -d '{"items":["Anna","Bo","Carl","Diana"],"count":2,"baseUrl":"https://www.snurrahjulet.se"}'
+        """;
+
+    private static readonly string CurlWindowsExample =
+        """
+        curl.exe -X POST "https://www.snurrahjulet.se/api/spin" `
+          -H "Content-Type: application/json" `
+          -d '{"items":["Anna","Bo","Carl","Diana"],"count":2,"baseUrl":"https://www.snurrahjulet.se"}'
+        """;
 
     private static readonly string PowerShellExample =
-        @"$body = @{
-    items   = @(""Anna"", ""Bo"", ""Carl"", ""Diana"")
-    count   = 2
-    baseUrl = """ + "\"" + AppUrl + "\"" + @"
-} | ConvertTo-Json
+        """
+        $body = @{
+            items   = @("Anna", "Bo", "Carl", "Diana")
+            count   = 2
+            baseUrl = "https://www.snurrahjulet.se"
+        } | ConvertTo-Json
 
-Invoke-RestMethod -Uri """ + "\"" + ApiUrl + "\"" + @" `
-    -Method Post -ContentType ""application/json"" -Body $body";
+        Invoke-RestMethod -Uri "https://www.snurrahjulet.se/api/spin" `
+            -Method Post -ContentType "application/json" -Body $body
+        """;
 
     protected override void OnInitialized()
     {
