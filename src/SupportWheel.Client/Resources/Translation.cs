@@ -60,4 +60,35 @@ public static class Translation
     public static string DeleteWheel => GetString(nameof(DeleteWheel));
     public static string WheelSaved => GetString(nameof(WheelSaved));
     public static string ItemCount => GetString(nameof(ItemCount));
+
+    // API docs page
+    public static string PageTitleApiDocs => GetString(nameof(PageTitleApiDocs));
+    public static string ApiDocsLink => GetString(nameof(ApiDocsLink));
+    public static string ApiOverviewTitle => GetString(nameof(ApiOverviewTitle));
+    public static string ApiOverviewDescription => GetString(nameof(ApiOverviewDescription));
+    public static string ApiEndpointTitle => GetString(nameof(ApiEndpointTitle));
+    public static string ApiEndpointMethod => GetString(nameof(ApiEndpointMethod));
+    public static string ApiEndpointUrl => GetString(nameof(ApiEndpointUrl));
+    public static string ApiEndpointAuth => GetString(nameof(ApiEndpointAuth));
+    public static string ApiEndpointAuthValue => GetString(nameof(ApiEndpointAuthValue));
+    public static string ApiEndpointContentType => GetString(nameof(ApiEndpointContentType));
+    public static string ApiRequestTitle => GetString(nameof(ApiRequestTitle));
+    public static string ApiFieldName => GetString(nameof(ApiFieldName));
+    public static string ApiFieldType => GetString(nameof(ApiFieldType));
+    public static string ApiFieldRequired => GetString(nameof(ApiFieldRequired));
+    public static string ApiFieldDescription => GetString(nameof(ApiFieldDescription));
+    public static string ApiFieldItemsDesc => GetString(nameof(ApiFieldItemsDesc));
+    public static string ApiFieldCountDesc => GetString(nameof(ApiFieldCountDesc));
+    public static string ApiFieldBaseUrlDesc => GetString(nameof(ApiFieldBaseUrlDesc));
+    public static string ApiYes => GetString(nameof(ApiYes));
+    public static string ApiNo => GetString(nameof(ApiNo));
+    public static string ApiResponseTitle => GetString(nameof(ApiResponseTitle));
+    public static string ApiResponseSuccess => GetString(nameof(ApiResponseSuccess));
+    public static string ApiResponseError => GetString(nameof(ApiResponseError));
+    public static string ApiExamplesTitle => GetString(nameof(ApiExamplesTitle));
+    public static string ApiNotesTitle => GetString(nameof(ApiNotesTitle));
+    public static string ApiNote1 => GetString(nameof(ApiNote1));
+    public static string ApiNote2 => GetString(nameof(ApiNote2));
+    public static string ApiNote3 => GetString(nameof(ApiNote3));
+    public static string ApiBackToWheel => GetString(nameof(ApiBackToWheel));
 }

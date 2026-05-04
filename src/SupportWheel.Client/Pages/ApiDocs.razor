@@ -1,0 +1,180 @@
+@page "/api-docs"
+@inject CultureState CultureState
+@implements IDisposable
+
+<PageTitle>@Translation.PageTitleApiDocs</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+
+        @* Overview *@
+        <div class="glass-card p-4 p-md-5 mb-4">
+            <h2 style="font-weight: 700; font-size: 1.8rem; margin-bottom: 1rem;
+                       background: linear-gradient(135deg, #a78bfa, #60a5fa);
+                       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                       background-clip: text;">
+                @Translation.ApiOverviewTitle
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 1rem; line-height: 1.7; margin: 0;">
+                @Translation.ApiOverviewDescription
+            </p>
+        </div>
+
+        @* Endpoint *@
+        <div class="glass-card p-4 mb-4">
+            <h3 style="font-weight: 600; font-size: 1.2rem; margin-bottom: 1rem;">@Translation.ApiEndpointTitle</h3>
+            <div class="api-field-fact">
+                <span class="label">@Translation.ApiEndpointMethod</span>
+                <span class="value">POST</span>
+            </div>
+            <div class="api-field-fact">
+                <span class="label">@Translation.ApiEndpointUrl</span>
+                <span class="value" style="font-size: 0.78rem; word-break: break-all;">@ApiUrl</span>
+            </div>
+            <div class="api-field-fact">
+                <span class="label">@Translation.ApiEndpointAuth</span>
+                <span class="value" style="font-family: var(--font);">@Translation.ApiEndpointAuthValue</span>
+            </div>
+            <div class="api-field-fact">
+                <span class="label">@Translation.ApiEndpointContentType</span>
+                <span class="value">application/json</span>
+            </div>
+        </div>
+
+        @* Request *@
+        <div class="glass-card p-4 mb-4">
+            <h3 style="font-weight: 600; font-size: 1.2rem; margin-bottom: 1rem;">@Translation.ApiRequestTitle</h3>
+            <div style="overflow-x: auto;">
+                <table class="api-table">
+                    <thead>
+                        <tr>
+                            <th>@Translation.ApiFieldName</th>
+                            <th>@Translation.ApiFieldType</th>
+                            <th>@Translation.ApiFieldRequired</th>
+                            <th>@Translation.ApiFieldDescription</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>items</code></td>
+                            <td><code>string[]</code></td>
+                            <td>@Translation.ApiYes</td>
+                            <td>@Translation.ApiFieldItemsDesc</td>
+                        </tr>
+                        <tr>
+                            <td><code>count</code></td>
+                            <td><code>number</code></td>
+                            <td>@Translation.ApiYes</td>
+                            <td>@Translation.ApiFieldCountDesc</td>
+                        </tr>
+                        <tr>
+                            <td><code>baseUrl</code></td>
+                            <td><code>string</code></td>
+                            <td>@Translation.ApiNo</td>
+                            <td>@Translation.ApiFieldBaseUrlDesc</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* Response *@
+        <div class="glass-card p-4 mb-4">
+            <h3 style="font-weight: 600; font-size: 1.2rem; margin-bottom: 1rem;">@Translation.ApiResponseTitle</h3>
+
+            <h4 style="font-size: 0.95rem; font-weight: 600; color: var(--success); margin-bottom: 0.5rem;">
+                @Translation.ApiResponseSuccess
+            </h4>
+            <div class="code-block">
+                <code>@SuccessExample</code>
+            </div>
+
+            <h4 style="font-size: 0.95rem; font-weight: 600; color: var(--danger); margin-top: 1.5rem; margin-bottom: 0.5rem;">
+                @Translation.ApiResponseError
+            </h4>
+            <div class="code-block">
+                <code>@ErrorExample</code>
+            </div>
+        </div>
+
+        @* Examples *@
+        <div class="glass-card p-4 mb-4">
+            <h3 style="font-weight: 600; font-size: 1.2rem; margin-bottom: 1rem;">@Translation.ApiExamplesTitle</h3>
+
+            <div class="code-block">
+                <div class="code-label">curl</div>
+                <code>@CurlExample</code>
+            </div>
+
+            <div class="code-block" style="margin-top: 1rem;">
+                <div class="code-label">PowerShell</div>
+                <code>@PowerShellExample</code>
+            </div>
+        </div>
+
+        @* Notes *@
+        <div class="glass-card p-4 mb-4">
+            <h3 style="font-weight: 600; font-size: 1.2rem; margin-bottom: 1rem;">@Translation.ApiNotesTitle</h3>
+            <ul style="color: var(--text-secondary); line-height: 1.8; padding-left: 1.2rem; margin: 0;">
+                <li>@Translation.ApiNote1</li>
+                <li>@Translation.ApiNote2</li>
+                <li>@Translation.ApiNote3</li>
+            </ul>
+        </div>
+
+        <div class="text-center mt-4 mb-3">
+            <a href="/" class="btn-ghost" style="text-decoration: none;">
+                @Translation.ApiBackToWheel
+            </a>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private const string ApiUrl = "https://func-supportwheel.azurewebsites.net/api/spin";
+    private const string AppUrl = "https://www.snurrahjulet.se";
+
+    private static readonly string SuccessExample =
+        """
+        {
+          "selected": ["Anna", "Bo"],
+          "selectedIndices": [0, 3],
+          "spinUrl": "https://www.snurrahjulet.se/spin/eyJ..."
+        }
+        """;
+
+    private static readonly string ErrorExample =
+        """
+        {
+          "error": "Items is required and must not be empty."
+        }
+        """;
+
+    private static readonly string CurlExample =
+        "curl -X POST " + ApiUrl + @" \
+  -H ""Content-Type: application/json"" \
+  -d '{""items"":[""Anna"",""Bo"",""Carl"",""Diana""],""count"":2,""baseUrl"":""" + AppUrl + @"""}'";
+
+    private static readonly string PowerShellExample =
+        @"$body = @{
+    items   = @(""Anna"", ""Bo"", ""Carl"", ""Diana"")
+    count   = 2
+    baseUrl = """ + "\"" + AppUrl + "\"" + @"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri """ + "\"" + ApiUrl + "\"" + @" `
+    -Method Post -ContentType ""application/json"" -Body $body";
+
+    protected override void OnInitialized()
+    {
+        CultureState.OnCultureChanged += OnCultureChanged;
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        CultureState.OnCultureChanged -= OnCultureChanged;
+    }
+}

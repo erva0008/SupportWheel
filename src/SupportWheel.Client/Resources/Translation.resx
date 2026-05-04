@@ -168,4 +168,91 @@ Bowling</value>
   <data name="ItemCount" xml:space="preserve">
     <value>{0} alternativ</value>
   </data>
+  <data name="PageTitleApiDocs" xml:space="preserve">
+    <value>API-dokumentation</value>
+  </data>
+  <data name="ApiDocsLink" xml:space="preserve">
+    <value>API</value>
+  </data>
+  <data name="ApiOverviewTitle" xml:space="preserve">
+    <value>API</value>
+  </data>
+  <data name="ApiOverviewDescription" xml:space="preserve">
+    <value>Använd API:t för att snurra hjulet programmatiskt — perfekt för automatiseringar, Teams-bottar, schemalagda uppgifter eller egna integrationer.</value>
+  </data>
+  <data name="ApiEndpointTitle" xml:space="preserve">
+    <value>Endpoint</value>
+  </data>
+  <data name="ApiEndpointMethod" xml:space="preserve">
+    <value>Metod</value>
+  </data>
+  <data name="ApiEndpointUrl" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="ApiEndpointAuth" xml:space="preserve">
+    <value>Autentisering</value>
+  </data>
+  <data name="ApiEndpointAuthValue" xml:space="preserve">
+    <value>Ingen (anonymt)</value>
+  </data>
+  <data name="ApiEndpointContentType" xml:space="preserve">
+    <value>Content-Type</value>
+  </data>
+  <data name="ApiRequestTitle" xml:space="preserve">
+    <value>Request</value>
+  </data>
+  <data name="ApiFieldName" xml:space="preserve">
+    <value>Fält</value>
+  </data>
+  <data name="ApiFieldType" xml:space="preserve">
+    <value>Typ</value>
+  </data>
+  <data name="ApiFieldRequired" xml:space="preserve">
+    <value>Obligatorisk</value>
+  </data>
+  <data name="ApiFieldDescription" xml:space="preserve">
+    <value>Beskrivning</value>
+  </data>
+  <data name="ApiFieldItemsDesc" xml:space="preserve">
+    <value>Alternativ att välja bland (2–50 stycken)</value>
+  </data>
+  <data name="ApiFieldCountDesc" xml:space="preserve">
+    <value>Antal att välja (1 till antal alternativ)</value>
+  </data>
+  <data name="ApiFieldBaseUrlDesc" xml:space="preserve">
+    <value>Bas-URL för den genererade snurrlänken. Sätt till https://www.snurrahjulet.se för att få en länk med animerat hjul.</value>
+  </data>
+  <data name="ApiYes" xml:space="preserve">
+    <value>Ja</value>
+  </data>
+  <data name="ApiNo" xml:space="preserve">
+    <value>Nej</value>
+  </data>
+  <data name="ApiResponseTitle" xml:space="preserve">
+    <value>Svar</value>
+  </data>
+  <data name="ApiResponseSuccess" xml:space="preserve">
+    <value>Lyckat svar (200)</value>
+  </data>
+  <data name="ApiResponseError" xml:space="preserve">
+    <value>Fel (400)</value>
+  </data>
+  <data name="ApiExamplesTitle" xml:space="preserve">
+    <value>Exempel</value>
+  </data>
+  <data name="ApiNotesTitle" xml:space="preserve">
+    <value>Bra att veta</value>
+  </data>
+  <data name="ApiNote1" xml:space="preserve">
+    <value>API:t är anonymt och fritt att använda.</value>
+  </data>
+  <data name="ApiNote2" xml:space="preserve">
+    <value>Ingen rate limiting just nu — var snäll mot servern.</value>
+  </data>
+  <data name="ApiNote3" xml:space="preserve">
+    <value>Länken i spinUrl leder till en sida med animerat hjul — dela den med ditt team!</value>
+  </data>
+  <data name="ApiBackToWheel" xml:space="preserve">
+    <value>← Tillbaka till hjulet</value>
+  </data>
 </root>

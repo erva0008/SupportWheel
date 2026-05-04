@@ -168,4 +168,91 @@ Bowling</value>
   <data name="ItemCount" xml:space="preserve">
     <value>{0} items</value>
   </data>
+  <data name="PageTitleApiDocs" xml:space="preserve">
+    <value>API Documentation</value>
+  </data>
+  <data name="ApiDocsLink" xml:space="preserve">
+    <value>API</value>
+  </data>
+  <data name="ApiOverviewTitle" xml:space="preserve">
+    <value>API</value>
+  </data>
+  <data name="ApiOverviewDescription" xml:space="preserve">
+    <value>Use the API to spin the wheel programmatically — perfect for automations, Teams bots, scheduled tasks, or custom integrations.</value>
+  </data>
+  <data name="ApiEndpointTitle" xml:space="preserve">
+    <value>Endpoint</value>
+  </data>
+  <data name="ApiEndpointMethod" xml:space="preserve">
+    <value>Method</value>
+  </data>
+  <data name="ApiEndpointUrl" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="ApiEndpointAuth" xml:space="preserve">
+    <value>Authentication</value>
+  </data>
+  <data name="ApiEndpointAuthValue" xml:space="preserve">
+    <value>None (anonymous)</value>
+  </data>
+  <data name="ApiEndpointContentType" xml:space="preserve">
+    <value>Content-Type</value>
+  </data>
+  <data name="ApiRequestTitle" xml:space="preserve">
+    <value>Request</value>
+  </data>
+  <data name="ApiFieldName" xml:space="preserve">
+    <value>Field</value>
+  </data>
+  <data name="ApiFieldType" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="ApiFieldRequired" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="ApiFieldDescription" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="ApiFieldItemsDesc" xml:space="preserve">
+    <value>Items to pick from (2–50 items)</value>
+  </data>
+  <data name="ApiFieldCountDesc" xml:space="preserve">
+    <value>How many to pick (1 to number of items)</value>
+  </data>
+  <data name="ApiFieldBaseUrlDesc" xml:space="preserve">
+    <value>Base URL for the generated spin link. Set to https://www.snurrahjulet.se for a link with the animated wheel.</value>
+  </data>
+  <data name="ApiYes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="ApiNo" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="ApiResponseTitle" xml:space="preserve">
+    <value>Response</value>
+  </data>
+  <data name="ApiResponseSuccess" xml:space="preserve">
+    <value>Success (200)</value>
+  </data>
+  <data name="ApiResponseError" xml:space="preserve">
+    <value>Error (400)</value>
+  </data>
+  <data name="ApiExamplesTitle" xml:space="preserve">
+    <value>Examples</value>
+  </data>
+  <data name="ApiNotesTitle" xml:space="preserve">
+    <value>Good to know</value>
+  </data>
+  <data name="ApiNote1" xml:space="preserve">
+    <value>The API is anonymous and free to use.</value>
+  </data>
+  <data name="ApiNote2" xml:space="preserve">
+    <value>No rate limiting for now — please be kind to the server.</value>
+  </data>
+  <data name="ApiNote3" xml:space="preserve">
+    <value>The spinUrl links to a page with an animated wheel — share it with your team!</value>
+  </data>
+  <data name="ApiBackToWheel" xml:space="preserve">
+    <value>← Back to the wheel</value>
+  </data>
 </root>

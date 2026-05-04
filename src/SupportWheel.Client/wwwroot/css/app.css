@@ -253,6 +253,95 @@ a, .btn-link {
     color: var(--text-secondary) !important;
 }
 
+/* ===== Code blocks (API docs) ===== */
+.code-block {
+    position: relative;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+}
+
+.code-block code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #e2e8f0;
+    white-space: pre;
+}
+
+.code-block .code-label {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-light);
+    margin-bottom: 0.5rem;
+}
+
+.api-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+}
+
+.api-table th {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    color: var(--accent-light);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.api-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.api-table tr:last-child td {
+    border-bottom: none;
+}
+
+.api-table code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.82rem;
+    background: rgba(124, 92, 252, 0.15);
+    padding: 0.15em 0.4em;
+    border-radius: 0.3em;
+    color: var(--accent-light);
+}
+
+.api-field-fact {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.9rem;
+}
+
+.api-field-fact:last-child {
+    border-bottom: none;
+}
+
+.api-field-fact .label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.api-field-fact .value {
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+}
+
 /* ===== Blazor infrastructure ===== */
 #blazor-error-ui {
     color-scheme: light only;
