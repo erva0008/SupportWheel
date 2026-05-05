@@ -418,3 +418,36 @@ body.party-chaos-active {
     0% { opacity: 0; transform: translateY(-12px); }
     100% { opacity: 1; transform: translateY(0); }
 }
+
+/* ===== Mobile responsiveness ===== */
+@media (max-width: 480px) {
+    .party-mode .winner-highlight.winner-focused {
+        min-width: unset;
+        width: 92vw;
+        padding: 2.5rem 1.5rem !important;
+    }
+
+    .party-mode .winner-highlight.winner-focused h3 {
+        font-size: 2rem !important;
+    }
+
+    .party-picker {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .party-levels {
+        padding-left: 0 !important;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .party-pick {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.7rem;
+    }
+
+    .party-toggle {
+        width: 100%;
+    }
+}
