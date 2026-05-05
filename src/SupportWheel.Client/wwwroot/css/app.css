@@ -473,13 +473,14 @@ code {
 
 /* ===== Count picker (segmented control) ===== */
 .count-picker {
-    display: inline-flex;
+    display: flex;
     align-items: stretch;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
     border-radius: 0.75rem;
     overflow: hidden;
     backdrop-filter: blur(8px);
+    width: fit-content;
 }
 
 .count-picker__input {
