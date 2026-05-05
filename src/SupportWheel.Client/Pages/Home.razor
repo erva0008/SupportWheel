@@ -38,6 +38,39 @@
                 </div>
             </div>
 
+            @if (ParsedItems.Length >= 2)
+            {
+                <div class="mb-4">
+                    <div class="party-picker">
+                        <button type="button"
+                                class="party-toggle @(PartyState.Enabled ? "on" : "")"
+                                @onclick="ToggleParty">
+                            🎉 @Translation.PartyMode
+                        </button>
+                        @if (PartyState.Enabled)
+                        {
+                            <div class="party-levels">
+                                <button type="button"
+                                        class="party-pick @(PartyState.Intensity == 1 ? "selected" : "")"
+                                        @onclick="() => SetPartyLevel(1)">
+                                    🎈 Lugnt
+                                </button>
+                                <button type="button"
+                                        class="party-pick @(PartyState.Intensity == 2 ? "selected" : "")"
+                                        @onclick="() => SetPartyLevel(2)">
+                                    🎉 Kul
+                                </button>
+                                <button type="button"
+                                        class="party-pick @(PartyState.Intensity == 3 ? "selected" : "")"
+                                        @onclick="() => SetPartyLevel(3)">
+                                    🤯 KAOS
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
             <div class="mb-4">
                 <label for="countInput" class="form-label">
                     @Translation.HowManyToPick
@@ -75,39 +108,6 @@
                         <label for="oneAtATimeCheck" class="form-check-label" style="color: var(--text-secondary); font-weight: 500;">
                             @Translation.OneAtATime
                         </label>
-                    </div>
-                </div>
-            }
-
-            @if (ParsedItems.Length >= 2)
-            {
-                <div class="mb-4">
-                    <div class="party-picker">
-                        <button type="button"
-                                class="party-toggle @(PartyState.Enabled ? "on" : "")"
-                                @onclick="ToggleParty">
-                            🎉 @Translation.PartyMode
-                        </button>
-                        @if (PartyState.Enabled)
-                        {
-                            <div class="party-levels">
-                                <button type="button"
-                                        class="party-pick @(PartyState.Intensity == 1 ? "selected" : "")"
-                                        @onclick="() => SetPartyLevel(1)">
-                                    🎈 Lugnt
-                                </button>
-                                <button type="button"
-                                        class="party-pick @(PartyState.Intensity == 2 ? "selected" : "")"
-                                        @onclick="() => SetPartyLevel(2)">
-                                    🎉 Kul
-                                </button>
-                                <button type="button"
-                                        class="party-pick @(PartyState.Intensity == 3 ? "selected" : "")"
-                                        @onclick="() => SetPartyLevel(3)">
-                                    🤯 KAOS
-                                </button>
-                            </div>
-                        }
                     </div>
                 </div>
             }
