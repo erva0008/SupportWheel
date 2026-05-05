@@ -1,0 +1,391 @@
+/* ===== Party Mode Animations ===== */
+/* Activated via .party-mode class on body + intensity: .party-mild / .party-medium / .party-chaos */
+
+/* --- Respect reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+    .party-mode * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* ===== Fun font when party mode is active (persistent, not just on win) ===== */
+body.party-mode.party-medium,
+body.party-mode.party-chaos {
+    font-family: 'Comic Sans MS', 'Comic Sans', 'Bangers', cursive, var(--font) !important;
+}
+
+body.party-mode.party-medium *,
+body.party-mode.party-chaos * {
+    font-family: inherit !important;
+}
+
+/* Chaos: bigger font */
+body.party-mode.party-chaos {
+    font-size: 1.05em;
+}
+
+/* ===== Persistent background pulse (gentle, not the win-flash) ===== */
+/* Use ::after overlay so pulse is always visible regardless of body background */
+body.party-mode::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+body.party-mode.party-mild::after {
+    opacity: 1;
+    background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
+    animation: pulse-overlay 4s ease-in-out infinite;
+}
+
+body.party-mode.party-medium::after {
+    opacity: 1;
+    background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.15) 0%, rgba(96, 165, 250, 0.05) 50%, transparent 80%);
+    animation: pulse-overlay 2s ease-in-out infinite;
+}
+
+body.party-mode.party-chaos::after {
+    opacity: 1;
+    background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.25) 0%, rgba(248, 113, 113, 0.1) 40%, transparent 75%);
+    animation: pulse-overlay-chaos 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-overlay {
+    0%, 100% { opacity: 0.4; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes pulse-overlay-chaos {
+    0% { opacity: 0.5; background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.3) 0%, transparent 65%); }
+    33% { opacity: 1; background: radial-gradient(ellipse at center, rgba(248, 113, 113, 0.25) 0%, transparent 65%); }
+    66% { opacity: 0.8; background: radial-gradient(ellipse at center, rgba(52, 211, 153, 0.2) 0%, transparent 65%); }
+    100% { opacity: 0.5; background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.3) 0%, transparent 65%); }
+}
+
+/* ===== Persistent wiggle on headings at chaos level ===== */
+body.party-mode.party-chaos h1,
+body.party-mode.party-chaos h2,
+body.party-mode.party-chaos h3 {
+    animation: wiggle 2s ease-in-out infinite;
+    display: inline-block;
+}
+
+/* ===== Party cursor (large emoji, applied to html for full coverage) ===== */
+html.party-mode.party-chaos,
+html.party-mode.party-chaos * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Ctext y='38' font-size='36'%3E🎉%3C/text%3E%3C/svg%3E") 24 24, auto;
+}
+
+/* ===== Background flash (triggered on win, not constant) ===== */
+@keyframes party-flash {
+    0% { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); }
+    15% { background: linear-gradient(135deg, #ff0080 0%, #7c5cfc 50%, #00ffcc 100%); }
+    30% { background: linear-gradient(135deg, #00cc00 0%, #ffff00 50%, #ff6600 100%); }
+    50% { background: linear-gradient(135deg, #ff0000 0%, #ff00ff 50%, #ffff00 100%); }
+    70% { background: linear-gradient(135deg, #0066ff 0%, #00ffcc 50%, #ff00ff 100%); }
+    100% { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); }
+}
+
+body.party-flash-mild {
+    animation: party-flash 2s ease-in-out 1 !important;
+    background-attachment: fixed !important;
+}
+
+body.party-flash-medium {
+    animation: party-flash 1.2s ease-in-out 3 !important;
+    background-attachment: fixed !important;
+}
+
+body.party-flash-chaos {
+    animation: party-flash 0.8s ease-in-out 4 !important;
+    background-attachment: fixed !important;
+}
+
+/* ===== Disco dots (triggered on win at medium+) ===== */
+@keyframes disco-dots {
+    0% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+    50% { background-position: 100% 50%, 0% 50%, 80% 20%; }
+    100% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+}
+
+body.party-flash-medium::before,
+body.party-flash-chaos::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.15;
+    background:
+        radial-gradient(circle 3px, #fff 100%, transparent 100%) 20% 30%,
+        radial-gradient(circle 2px, #a78bfa 100%, transparent 100%) 70% 60%,
+        radial-gradient(circle 4px, #60a5fa 100%, transparent 100%) 40% 80%,
+        radial-gradient(circle 2px, #34d399 100%, transparent 100%) 80% 20%,
+        radial-gradient(circle 3px, #fbbf24 100%, transparent 100%) 10% 70%,
+        radial-gradient(circle 2px, #f87171 100%, transparent 100%) 60% 10%;
+    background-size: 100% 100%;
+    animation: disco-dots 4s linear infinite;
+}
+
+body.party-flash-chaos::before {
+    opacity: 0.4;
+    animation-duration: 1s;
+}
+
+/* ===== Wiggle text ===== */
+@keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-2deg); }
+    75% { transform: rotate(2deg); }
+}
+
+.party-mode .wiggle-text {
+    animation: wiggle 0.8s ease-in-out infinite;
+    display: inline-block;
+}
+
+.party-mode.party-chaos .wiggle-text {
+    animation-duration: 0.4s;
+}
+
+@keyframes wiggle-strong {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-4deg) scale(1.02); }
+    75% { transform: rotate(4deg) scale(1.02); }
+}
+
+.party-mode.party-chaos .wiggle-text {
+    animation-name: wiggle-strong;
+}
+
+/* ===== Pulse wheel (on spin complete) ===== */
+@keyframes pulse-wheel {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+.party-mode .wheel-pulse {
+    animation: pulse-wheel 0.6s ease-in-out 3;
+}
+
+.party-mode.party-chaos .wheel-pulse {
+    animation: pulse-wheel 0.3s ease-in-out 6;
+}
+
+/* ===== Winner spotlight glow ===== */
+@keyframes spotlight {
+    0%, 100% { box-shadow: 0 0 20px rgba(52, 211, 153, 0.4); }
+    50% { box-shadow: 0 0 40px rgba(52, 211, 153, 0.8), 0 0 80px rgba(124, 92, 252, 0.4); }
+}
+
+.party-mode .winner-spotlight {
+    animation: spotlight 1.5s ease-in-out infinite;
+    border: 2px solid var(--success);
+    border-radius: var(--radius);
+    padding: 0.5rem;
+}
+
+.party-mode.party-chaos .winner-spotlight {
+    animation-duration: 0.7s;
+}
+
+/* ===== Party picker (Home page — button group) ===== */
+.party-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.party-toggle {
+    align-self: flex-start;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--text-secondary);
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.party-toggle:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
+.party-toggle.on {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(96, 165, 250, 0.1));
+    color: var(--accent-light);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.party-levels {
+    display: flex;
+    gap: 0.4rem;
+    padding-left: 1.2rem;
+}
+
+.party-picker-buttons {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.party-pick {
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--text-primary);
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.party-pick:hover {
+    border-color: var(--accent);
+    background: rgba(124, 58, 237, 0.1);
+}
+
+.party-pick.selected {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(96, 165, 250, 0.15));
+    box-shadow: 0 0 12px var(--accent-glow);
+    font-weight: 600;
+}
+
+
+
+/* ===== Chaos mode: elements fly WILDLY ===== */
+@keyframes chaos-float {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    15% { transform: translate(var(--chaos-x), var(--chaos-y)) rotate(var(--chaos-rot)) scale(var(--chaos-scale)); }
+    30% { transform: translate(calc(var(--chaos-x) * -1.5), calc(var(--chaos-y) * -1.2)) rotate(calc(var(--chaos-rot) * -2)) scale(0.1); }
+    50% { transform: translate(calc(var(--chaos-x) * 2), calc(var(--chaos-y) * 0.5)) rotate(calc(var(--chaos-rot) * 3)) scale(2); }
+    70% { transform: translate(calc(var(--chaos-x) * -0.8), calc(var(--chaos-y) * 1.8)) rotate(calc(var(--chaos-rot) * -1.5)) scale(0.3); }
+    85% { transform: translate(calc(var(--chaos-x) * 0.5), calc(var(--chaos-y) * -0.5)) rotate(calc(var(--chaos-rot) * 1)) scale(1.5); }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+}
+
+.chaos-fly {
+    animation: chaos-float 5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    will-change: transform;
+}
+
+/* Pulsing glow on page during chaos */
+body.party-chaos-active {
+    animation: chaos-pulse 0.3s ease-in-out infinite alternate;
+    overflow: hidden;
+}
+
+@keyframes chaos-pulse {
+    0% { box-shadow: inset 0 0 80px rgba(124, 58, 237, 0.4); }
+    100% { box-shadow: inset 0 0 120px rgba(248, 113, 113, 0.5); }
+}
+
+/* Winner zoom: stays centered, big, still */
+.chaos-winner-zoom {
+    animation: winner-zoom-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+    position: relative;
+    z-index: 1000;
+}
+
+/* When winner is in focused modal state, don't let chaos-zoom override positioning */
+.winner-highlight.winner-focused.chaos-winner-zoom {
+    position: fixed !important;
+    z-index: 10000 !important;
+    animation: none !important;
+}
+
+@keyframes winner-zoom-in {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.8); }
+    100% { transform: scale(1.5); text-shadow: 0 0 30px var(--accent), 0 0 60px rgba(124, 58, 237, 0.6), 0 0 100px rgba(248, 113, 113, 0.3); }
+}
+
+/* ===== Legacy classes kept for compatibility (unused old container) ===== */
+.party-toggle-btn { display: none; }
+.party-slider-container { display: contents; }
+.party-slider-track { display: contents; }
+
+/* ===== Flash overlay (fullscreen, guaranteed visible) ===== */
+@keyframes flash-overlay-pulse {
+    0% { background: rgba(255, 0, 128, 0.0); }
+    15% { background: rgba(255, 0, 128, 0.35); }
+    30% { background: rgba(0, 255, 200, 0.3); }
+    50% { background: rgba(255, 255, 0, 0.35); }
+    70% { background: rgba(100, 0, 255, 0.3); }
+    85% { background: rgba(255, 100, 0, 0.25); }
+    100% { background: rgba(255, 0, 128, 0.0); }
+}
+
+.party-flash-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+}
+
+.party-flash-overlay-mild {
+    animation: flash-overlay-pulse 2s ease-in-out 1;
+}
+
+.party-flash-overlay-medium {
+    animation: flash-overlay-pulse 1.2s ease-in-out 3;
+}
+
+.party-flash-overlay-chaos {
+    animation: flash-overlay-pulse 0.4s ease-in-out 10;
+}
+
+/* ===== Winner focused modal (party mode, on win) ===== */
+.party-mode .winner-highlight.winner-focused {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 10000 !important;
+    padding: 4rem 6rem !important;
+    border-radius: 2rem !important;
+    border: 2px solid rgba(52, 211, 153, 0.6) !important;
+    box-shadow: 0 0 80px rgba(52, 211, 153, 0.3), 0 0 160px rgba(124, 58, 237, 0.2), 0 25px 50px rgba(0,0,0,0.15) !important;
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(96, 165, 250, 0.1)) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    min-width: 420px;
+    max-width: 92vw;
+    animation: winner-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+}
+
+.party-mode .winner-highlight.winner-focused h3 {
+    font-size: 3.2rem !important;
+    margin-bottom: 2rem !important;
+    -webkit-text-fill-color: unset !important;
+    color: #fff !important;
+}
+
+.party-mode .winner-highlight.winner-focused .btn-glow {
+    font-size: 1.2rem !important;
+    padding: 0.8rem 2rem !important;
+}
+
+@keyframes winner-pop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.party-mode .winner-highlight.winner-shrinking {
+    animation: winner-shrink 0.5s ease-in forwards !important;
+}
+
+@keyframes winner-shrink {
+    0% { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+}

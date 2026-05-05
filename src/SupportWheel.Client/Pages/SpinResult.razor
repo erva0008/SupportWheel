@@ -4,6 +4,7 @@
 @inject IJSRuntime JS
 @inject CultureState CultureState
 @inject SavedWheelService SavedWheelService
+@inject PartyModeState PartyState
 
 <PageTitle>@Translation.PageTitleResult</PageTitle>
 
@@ -21,6 +22,27 @@ else
 {
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8 text-center">
+
+            @* Party controls — toggle + levels *@
+            <div class="mb-3 d-flex justify-content-center align-items-center gap-2" style="font-size: 0.8rem;">
+                <button type="button"
+                        class="party-toggle @(PartyState.Enabled ? "on" : "")"
+                        @onclick="ToggleParty"
+                        style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">
+                    🎉 Party
+                </button>
+                @if (PartyState.Enabled)
+                {
+                    <div class="party-picker-buttons">
+                        <button type="button" class="party-pick @(PartyState.Intensity == 1 ? "selected" : "")"
+                                @onclick="() => SetPartyLevel(1)">🎈</button>
+                        <button type="button" class="party-pick @(PartyState.Intensity == 2 ? "selected" : "")"
+                                @onclick="() => SetPartyLevel(2)">🎉</button>
+                        <button type="button" class="party-pick @(PartyState.Intensity == 3 ? "selected" : "")"
+                                @onclick="() => SetPartyLevel(3)">🤯</button>
+                    </div>
+                }
+            </div>
 
             @if (isSequential && !allRoundsComplete)
             {
@@ -47,7 +69,7 @@ else
             @* Sequential mode: round complete but not all rounds done *@
             @if (isSequential && !roundInProgress && !allRoundsComplete && revealedWinners.Count > 0)
             {
-                <div class="glass-card p-4 mt-3">
+                <div class="glass-card p-4 mt-3 winner-highlight @(winnerFocused ? "winner-focused" : "") @(winnerShrinking ? "winner-shrinking" : "")">
                     <h3 style="font-weight: 700; font-size: 1.3rem; margin-bottom: 0.5rem;
                                color: var(--success);">
                         @string.Format(Translation.RoundWinner, revealedWinners[^1])
@@ -61,7 +83,7 @@ else
             @* Result section — shown after all animations complete *@
             @if (animationComplete)
             {
-                <div class="glass-card p-4 mt-3">
+                <div class="glass-card p-4 mt-3 winner-highlight @(winnerFocused ? "winner-focused" : "") @(winnerShrinking ? "winner-shrinking" : "") @(PartyState.EffectiveIntensity > 0 ? "winner-spotlight" : "")">
                     <h3 style="font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem;
                                background: linear-gradient(135deg, #34d399, #60a5fa);
                                -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -150,6 +172,9 @@ else
     private string saveWheelName = "";
     private DotNetObjectReference<SpinResult>? dotNetRef;
     private System.Threading.Timer? toastTimer;
+    private bool winnerFocused;
+    private bool winnerShrinking;
+    private System.Threading.Timer? winnerFocusTimer;
 
     // Sequential mode state
     private bool isSequential;
@@ -165,6 +190,22 @@ else
     }
 
     private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task ToggleParty()
+    {
+        PartyState.SetEnabled(!PartyState.Enabled);
+        await JS.InvokeVoidAsync("PartyMode.saveState", PartyState.Enabled, PartyState.Intensity);
+        await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
+        if (PartyState.Enabled)
+            await JS.InvokeVoidAsync("PartyMode.initAudio");
+    }
+
+    private async Task SetPartyLevel(int level)
+    {
+        PartyState.SetIntensity(level);
+        await JS.InvokeVoidAsync("PartyMode.saveState", PartyState.Enabled, PartyState.Intensity);
+        await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
+    }
 
     protected override void OnParametersSet()
     {
@@ -205,10 +246,32 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            // Only load from localStorage if singleton doesn't already have state
+            // (SPA navigation preserves singleton; direct URL load doesn't)
+            if (!PartyState.Enabled)
+            {
+                var state = await JS.InvokeAsync<PartyStateDto>("PartyMode.loadState");
+                var reducedMotion = await JS.InvokeAsync<bool>("PartyMode.prefersReducedMotion");
+                PartyState.Load(state.Enabled, state.Intensity, reducedMotion);
+            }
+            await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
+            StateHasChanged();
+        }
+
         if (!needsAnimation || spinData is null)
             return;
 
         needsAnimation = false;
+
+        // Party mode: init audio and trigger spin-start effects
+        var partyIntensity = PartyState.EffectiveIntensity;
+        if (partyIntensity > 0)
+        {
+            await JS.InvokeVoidAsync("PartyMode.initAudio");
+            await JS.InvokeVoidAsync("PartyMode.onSpinStart", partyIntensity);
+        }
 
         dotNetRef?.Dispose();
         dotNetRef = DotNetObjectReference.Create(this);
@@ -255,31 +318,68 @@ else
     /// Called from JavaScript when the animation completes.
     /// </summary>
     [JSInvokable]
-    public void OnSpinComplete()
+    public async void OnSpinComplete()
     {
-        if (isSequential)
+        try
         {
-            roundInProgress = false;
-            var revealOrder = spinData!.RevealOrderIndices ?? spinData.SelectedIndices;
-            revealedWinners.Add(spinData.Items[revealOrder[currentRound]]);
-
-            if (currentRound + 1 >= totalRounds)
+            var partyIntensity = PartyState.EffectiveIntensity;
+            if (partyIntensity > 0)
             {
-                allRoundsComplete = true;
-                animationComplete = true;
+                await JS.InvokeVoidAsync("PartyMode.onSpinComplete", partyIntensity);
+                // Focus winner card (centered modal) for 4 seconds
+                winnerFocused = true;
+                winnerFocusTimer?.Dispose();
+                winnerFocusTimer = new System.Threading.Timer(_ =>
+                {
+                    InvokeAsync(() =>
+                    {
+                        winnerFocused = false;
+                        winnerShrinking = true;
+                        StateHasChanged();
+                        // Remove shrinking class after animation
+                        Task.Delay(500).ContinueWith(_ => InvokeAsync(() =>
+                        {
+                            winnerShrinking = false;
+                            StateHasChanged();
+                        }));
+                    });
+                }, null, 4000, Timeout.Infinite);
             }
 
-            StateHasChanged();
+            if (isSequential)
+            {
+                roundInProgress = false;
+                var revealOrder = spinData!.RevealOrderIndices ?? spinData.SelectedIndices;
+                revealedWinners.Add(spinData.Items[revealOrder[currentRound]]);
+
+                if (currentRound + 1 >= totalRounds)
+                {
+                    allRoundsComplete = true;
+                    animationComplete = true;
+                }
+
+                await InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                animationComplete = true;
+                await InvokeAsync(StateHasChanged);
+            }
         }
-        else
+        catch (Exception ex)
         {
+            Console.WriteLine($"[Party] OnSpinComplete error: {ex.Message}");
+            // Ensure UI still updates even if party effects fail
             animationComplete = true;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 
     private void NextRound()
     {
+        winnerFocused = false;
+        winnerShrinking = false;
+        winnerFocusTimer?.Dispose();
         currentRound++;
         needsAnimation = true;
         StateHasChanged();
@@ -362,5 +462,9 @@ else
         CultureState.OnCultureChanged -= OnCultureChanged;
         dotNetRef?.Dispose();
         toastTimer?.Dispose();
+        winnerFocusTimer?.Dispose();
+        _ = JS.InvokeVoidAsync("PartyMode.dispose");
     }
+
+    private record PartyStateDto(bool Enabled, int Intensity);
 }

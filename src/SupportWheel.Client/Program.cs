@@ -11,6 +11,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddSingleton<CultureState>();
+builder.Services.AddSingleton<PartyModeState>();
 builder.Services.AddScoped<SavedWheelService>();
 
 var host = builder.Build();

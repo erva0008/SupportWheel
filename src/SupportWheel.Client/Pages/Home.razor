@@ -1,8 +1,10 @@
 @page "/"
 @implements IDisposable
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 @inject CultureState CultureState
 @inject SavedWheelService SavedWheelService
+@inject PartyModeState PartyState
 
 <PageTitle>@Translation.PageTitleHome</PageTitle>
 
@@ -18,6 +20,7 @@
                 </label>
                 <textarea @bind="itemsText"
                           @bind:event="oninput"
+                          @bind:after="OnItemsChanged"
                           id="itemsInput"
                           class="form-control"
                           rows="8"
@@ -39,13 +42,28 @@
                 <label for="countInput" class="form-label">
                     @Translation.HowManyToPick
                 </label>
-                <input type="number"
-                       @bind="count"
-                       id="countInput"
-                       class="form-control"
-                       min="1"
-                       max="@MaxCount"
-                       style="max-width: 120px;" />
+                <div class="count-picker">
+                    <button type="button" class="count-picker__btn"
+                            disabled="@(count <= 1)"
+                            @onclick="DecrementCount">−</button>
+                    <input type="number"
+                           @bind="count"
+                           @bind:event="oninput"
+                           @bind:after="OnCountChanged"
+                           id="countInput"
+                           class="count-picker__input"
+                           min="1"
+                           max="@MaxCount"
+                           disabled="@selectAll" />
+                    <button type="button" class="count-picker__btn"
+                            disabled="@(count >= MaxCount)"
+                            @onclick="IncrementCount">+</button>
+                    <label class="count-picker__toggle @(selectAll ? "count-picker__toggle--active" : "")">
+                        <input type="checkbox" @bind="selectAll" @bind:after="OnSelectAllChanged"
+                               id="selectAllCheck" hidden />
+                        @Translation.SelectAll
+                    </label>
+                </div>
             </div>
 
             @if (count > 1)
@@ -57,6 +75,39 @@
                         <label for="oneAtATimeCheck" class="form-check-label" style="color: var(--text-secondary); font-weight: 500;">
                             @Translation.OneAtATime
                         </label>
+                    </div>
+                </div>
+            }
+
+            @if (ParsedItems.Length >= 2)
+            {
+                <div class="mb-4">
+                    <div class="party-picker">
+                        <button type="button"
+                                class="party-toggle @(PartyState.Enabled ? "on" : "")"
+                                @onclick="ToggleParty">
+                            🎉 Party
+                        </button>
+                        @if (PartyState.Enabled)
+                        {
+                            <div class="party-levels">
+                                <button type="button"
+                                        class="party-pick @(PartyState.Intensity == 1 ? "selected" : "")"
+                                        @onclick="() => SetPartyLevel(1)">
+                                    🎈 Lugnt
+                                </button>
+                                <button type="button"
+                                        class="party-pick @(PartyState.Intensity == 2 ? "selected" : "")"
+                                        @onclick="() => SetPartyLevel(2)">
+                                    🎉 Kul
+                                </button>
+                                <button type="button"
+                                        class="party-pick @(PartyState.Intensity == 3 ? "selected" : "")"
+                                        @onclick="() => SetPartyLevel(3)">
+                                    🤯 KAOS
+                                </button>
+                            </div>
+                        }
                     </div>
                 </div>
             }
@@ -130,7 +181,8 @@
 @code {
     private string itemsText = "";
     private int count = 1;
-    private bool oneAtATime;
+    private bool oneAtATime = true;
+    private bool selectAll;
     private string? errorMessage;
     private List<SavedWheel> savedWheels = [];
     private bool wheelSaved;
@@ -168,6 +220,51 @@
         savedWheels = await SavedWheelService.GetAllAsync();
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var state = await JS.InvokeAsync<PartyStateDto>("PartyMode.loadState");
+            var reducedMotion = await JS.InvokeAsync<bool>("PartyMode.prefersReducedMotion");
+            PartyState.Load(state.Enabled, state.Intensity, reducedMotion);
+            await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleParty()
+    {
+        PartyState.SetEnabled(!PartyState.Enabled);
+        await JS.InvokeVoidAsync("PartyMode.saveState", PartyState.Enabled, PartyState.Intensity);
+        await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
+        if (PartyState.Enabled)
+            await JS.InvokeVoidAsync("PartyMode.initAudio");
+    }
+
+    private async Task SetPartyLevel(int level)
+    {
+        // Toggle off if clicking the same level that's already active
+        if (PartyState.Enabled && PartyState.Intensity == level)
+        {
+            await DisableParty();
+            return;
+        }
+        PartyState.SetEnabled(true);
+        PartyState.SetIntensity(level);
+        await JS.InvokeVoidAsync("PartyMode.saveState", PartyState.Enabled, PartyState.Intensity);
+        await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
+        await JS.InvokeVoidAsync("PartyMode.initAudio");
+    }
+
+    private async Task DisableParty()
+    {
+        PartyState.SetEnabled(false);
+        await JS.InvokeVoidAsync("PartyMode.saveState", false, PartyState.Intensity);
+        await JS.InvokeVoidAsync("PartyMode.setBodyClass", false, 0);
+    }
+
+    private record PartyStateDto(bool Enabled, int Intensity);
+
     private void OnCultureChanged() => InvokeAsync(StateHasChanged);
 
     private string[] ParsedItems => itemsText
@@ -182,6 +279,41 @@
         .ToList();
 
     private int MaxCount => Math.Max(1, ParsedItems.Length);
+
+    private void OnSelectAllChanged()
+    {
+        if (selectAll)
+            count = MaxCount;
+    }
+
+    private void OnCountChanged()
+    {
+        // Clamp to valid range
+        if (count > MaxCount) count = MaxCount;
+        if (count < 1) count = 1;
+        // Sync selectAll state
+        selectAll = count >= MaxCount && MaxCount > 1;
+    }
+
+    private void IncrementCount()
+    {
+        if (count < MaxCount) count++;
+        selectAll = count >= MaxCount && MaxCount > 1;
+    }
+
+    private void DecrementCount()
+    {
+        if (count > 1) count--;
+        selectAll = false;
+    }
+
+    private void OnItemsChanged()
+    {
+        if (selectAll)
+            count = MaxCount;
+        else if (count > MaxCount)
+            count = MaxCount;
+    }
 
     private bool CanSpin => ParsedItems.Length >= 2
                             && count >= 1

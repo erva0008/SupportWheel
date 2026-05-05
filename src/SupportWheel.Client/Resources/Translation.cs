@@ -27,6 +27,7 @@ public static class Translation
     public static string PlaceholderItems => GetString(nameof(PlaceholderItems));
     public static string DuplicateWarning => GetString(nameof(DuplicateWarning));
     public static string HowManyToPick => GetString(nameof(HowManyToPick));
+    public static string SelectAll => GetString(nameof(SelectAll));
     public static string ErrorMinItems => GetString(nameof(ErrorMinItems));
     public static string ErrorPickCount => GetString(nameof(ErrorPickCount));
     public static string ErrorDuplicates => GetString(nameof(ErrorDuplicates));
@@ -91,4 +92,10 @@ public static class Translation
     public static string ApiNote2 => GetString(nameof(ApiNote2));
     public static string ApiNote3 => GetString(nameof(ApiNote3));
     public static string ApiBackToWheel => GetString(nameof(ApiBackToWheel));
+
+    // Party mode
+    public static string PartyMode => GetString(nameof(PartyMode));
+    public static string PartyMild => GetString(nameof(PartyMild));
+    public static string PartyMedium => GetString(nameof(PartyMedium));
+    public static string PartyChaos => GetString(nameof(PartyChaos));
 }

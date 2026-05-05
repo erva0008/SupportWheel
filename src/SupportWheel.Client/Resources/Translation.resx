@@ -78,6 +78,9 @@ Bowling</value>
   <data name="HowManyToPick" xml:space="preserve">
     <value>Hur många ska väljas:</value>
   </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>Alla</value>
+  </data>
   <data name="ErrorMinItems" xml:space="preserve">
     <value>Ange minst 2 alternativ.</value>
   </data>
@@ -127,13 +130,13 @@ Bowling</value>
     <value>📋 Kopiera länk</value>
   </data>
   <data name="SpinAgainButton" xml:space="preserve">
-    <value>🔄 Snurra igen</value>
+    <value>🔄 Snurra samma hjul igen</value>
   </data>
   <data name="EditItemsButton" xml:space="preserve">
-    <value>✏️ Ändra alternativ</value>
+    <value>✏️ Ändra namn/antal</value>
   </data>
   <data name="NewSpinButton" xml:space="preserve">
-    <value>🏠 Ny snurrning</value>
+    <value>➕ Starta ny dragning</value>
   </data>
   <data name="LinkCopied" xml:space="preserve">
     <value>Länk kopierad!</value>
@@ -151,7 +154,7 @@ Bowling</value>
     <value>Inga sparade hjul</value>
   </data>
   <data name="SaveWheel" xml:space="preserve">
-    <value>💾 Spara hjul</value>
+    <value>💾 Spara denna uppsättning</value>
   </data>
   <data name="SaveWheelPrompt" xml:space="preserve">
     <value>Namn på hjulet:</value>
@@ -254,5 +257,17 @@ Bowling</value>
   </data>
   <data name="ApiBackToWheel" xml:space="preserve">
     <value>← Tillbaka till hjulet</value>
+  </data>
+  <data name="PartyMode" xml:space="preserve">
+    <value>Partyläge</value>
+  </data>
+  <data name="PartyMild" xml:space="preserve">
+    <value>Mild</value>
+  </data>
+  <data name="PartyMedium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="PartyChaos" xml:space="preserve">
+    <value>Kaos</value>
   </data>
 </root>
