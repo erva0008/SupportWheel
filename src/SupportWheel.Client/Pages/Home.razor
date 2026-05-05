@@ -86,7 +86,7 @@
                         <button type="button"
                                 class="party-toggle @(PartyState.Enabled ? "on" : "")"
                                 @onclick="ToggleParty">
-                            🎉 Party
+                            🎉 @Translation.PartyMode
                         </button>
                         @if (PartyState.Enabled)
                         {
