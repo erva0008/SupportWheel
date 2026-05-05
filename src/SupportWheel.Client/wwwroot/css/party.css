@@ -194,6 +194,76 @@ body.party-flash-chaos::before {
     animation-duration: 0.7s;
 }
 
+/* ===== Chaos mode: decorative emojis around UI ===== */
+.party-mode.party-chaos .header-grid > h1 {
+    position: relative;
+}
+
+.party-mode.party-chaos .header-grid > h1::before {
+    content: '🎉🔥🤯';
+    position: absolute;
+    left: -2.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    animation: chaos-emoji-bounce 1.2s ease-in-out infinite alternate;
+    -webkit-text-fill-color: initial;
+}
+
+.party-mode.party-chaos .header-grid > h1::after {
+    content: '🤯🔥🎉';
+    position: absolute;
+    right: -2.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    animation: chaos-emoji-bounce 1.2s ease-in-out infinite alternate-reverse;
+    -webkit-text-fill-color: initial;
+}
+
+@keyframes chaos-emoji-bounce {
+    0% { transform: translateY(-50%) scale(1) rotate(-5deg); }
+    100% { transform: translateY(-50%) scale(1.2) rotate(5deg); }
+}
+
+/* Chaos: pulsing glow on spin button */
+.party-mode.party-chaos .btn-glow {
+    animation: chaos-btn-pulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes chaos-btn-pulse {
+    0% { box-shadow: 0 4px 20px var(--accent-glow); }
+    100% { box-shadow: 0 4px 40px var(--accent-glow), 0 0 60px rgba(248, 113, 113, 0.3); }
+}
+
+/* Chaos: party-pick buttons wiggle */
+.party-mode.party-chaos .party-pick {
+    animation: chaos-wiggle 0.6s ease-in-out infinite alternate;
+}
+
+.party-mode.party-chaos .party-pick:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.party-mode.party-chaos .party-pick:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes chaos-wiggle {
+    0% { transform: rotate(-2deg) scale(1); }
+    100% { transform: rotate(2deg) scale(1.05); }
+}
+
+/* Medium: subtle glow on header */
+.party-mode.party-medium .header-grid > h1 {
+    animation: medium-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes medium-glow {
+    0% { filter: drop-shadow(0 0 24px rgba(124,92,252,0.3)); }
+    100% { filter: drop-shadow(0 0 36px rgba(124,92,252,0.6)) drop-shadow(0 0 60px rgba(96,165,250,0.2)); }
+}
+
 /* ===== Party picker (Home page — button group) ===== */
 .party-picker {
     display: flex;
@@ -464,5 +534,11 @@ body.party-chaos-active {
 
     .party-toggle {
         width: 100%;
+    }
+
+    /* Hide emoji decorations on mobile (overflow) */
+    .party-mode.party-chaos .header-grid > h1::before,
+    .party-mode.party-chaos .header-grid > h1::after {
+        display: none;
     }
 }
