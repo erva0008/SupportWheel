@@ -84,25 +84,25 @@ html.party-mode.party-chaos * {
 /* ===== Background flash (triggered on win, not constant) ===== */
 @keyframes party-flash {
     0% { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); }
-    15% { background: linear-gradient(135deg, #ff0080 0%, #7c5cfc 50%, #00ffcc 100%); }
-    30% { background: linear-gradient(135deg, #00cc00 0%, #ffff00 50%, #ff6600 100%); }
-    50% { background: linear-gradient(135deg, #ff0000 0%, #ff00ff 50%, #ffff00 100%); }
-    70% { background: linear-gradient(135deg, #0066ff 0%, #00ffcc 50%, #ff00ff 100%); }
+    15% { background: linear-gradient(135deg, #1a0533 0%, #2d1b69 50%, #0a2a2a 100%); }
+    30% { background: linear-gradient(135deg, #0a2a0a 0%, #2a2a00 50%, #2a1500 100%); }
+    50% { background: linear-gradient(135deg, #2a0a0a 0%, #2a0a2a 50%, #2a2a00 100%); }
+    70% { background: linear-gradient(135deg, #0a1a3a 0%, #0a2a2a 50%, #2a0a2a 100%); }
     100% { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); }
 }
 
 body.party-flash-mild {
-    animation: party-flash 2s ease-in-out 1 !important;
+    animation: party-flash 2.5s ease-in-out 1 !important;
     background-attachment: fixed !important;
 }
 
 body.party-flash-medium {
-    animation: party-flash 1.2s ease-in-out 3 !important;
+    animation: party-flash 1.8s ease-in-out 2 !important;
     background-attachment: fixed !important;
 }
 
 body.party-flash-chaos {
-    animation: party-flash 0.8s ease-in-out 4 !important;
+    animation: party-flash 1.2s ease-in-out 3 !important;
     background-attachment: fixed !important;
 }
 
@@ -120,7 +120,7 @@ body.party-flash-chaos::before {
     inset: 0;
     pointer-events: none;
     z-index: 9999;
-    opacity: 0.15;
+    opacity: 0.08;
     background:
         radial-gradient(circle 3px, #fff 100%, transparent 100%) 20% 30%,
         radial-gradient(circle 2px, #a78bfa 100%, transparent 100%) 70% 60%,
@@ -133,8 +133,8 @@ body.party-flash-chaos::before {
 }
 
 body.party-flash-chaos::before {
-    opacity: 0.4;
-    animation-duration: 1s;
+    opacity: 0.15;
+    animation-duration: 2s;
 }
 
 /* ===== Wiggle text ===== */
@@ -430,11 +430,11 @@ body.party-chaos-active {
 /* ===== Flash overlay (fullscreen, guaranteed visible) ===== */
 @keyframes flash-overlay-pulse {
     0% { background: rgba(255, 0, 128, 0.0); }
-    15% { background: rgba(255, 0, 128, 0.35); }
-    30% { background: rgba(0, 255, 200, 0.3); }
-    50% { background: rgba(255, 255, 0, 0.35); }
-    70% { background: rgba(100, 0, 255, 0.3); }
-    85% { background: rgba(255, 100, 0, 0.25); }
+    15% { background: rgba(255, 0, 128, 0.12); }
+    30% { background: rgba(0, 255, 200, 0.10); }
+    50% { background: rgba(255, 255, 0, 0.12); }
+    70% { background: rgba(100, 0, 255, 0.10); }
+    85% { background: rgba(255, 100, 0, 0.08); }
     100% { background: rgba(255, 0, 128, 0.0); }
 }
 
@@ -446,15 +446,15 @@ body.party-chaos-active {
 }
 
 .party-flash-overlay-mild {
-    animation: flash-overlay-pulse 2s ease-in-out 1;
+    animation: flash-overlay-pulse 2.5s ease-in-out 1;
 }
 
 .party-flash-overlay-medium {
-    animation: flash-overlay-pulse 1.2s ease-in-out 3;
+    animation: flash-overlay-pulse 1.8s ease-in-out 2;
 }
 
 .party-flash-overlay-chaos {
-    animation: flash-overlay-pulse 0.4s ease-in-out 10;
+    animation: flash-overlay-pulse 0.8s ease-in-out 5;
 }
 
 /* ===== Winner slot placeholder (prevents layout jump) ===== */

@@ -23,16 +23,22 @@ else
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8 text-center">
 
-            @* Party controls — toggle + levels *@
+            @* Party controls — toggle + levels + mute *@
             <div class="mb-3 d-flex justify-content-center align-items-center gap-2" style="font-size: 0.8rem;">
                 <button type="button"
                         class="party-toggle @(PartyState.Enabled ? "on" : "")"
                         @onclick="ToggleParty"
                         style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">
-                    🎉 Party
+                    🎉 @Translation.PartyMode
                 </button>
                 @if (PartyState.Enabled)
                 {
+                    <button type="button"
+                            class="party-mute @(PartyState.Muted ? "muted" : "")"
+                            @onclick="ToggleMute"
+                            title="@(PartyState.Muted ? "Unmute" : "Mute")">
+                        @(PartyState.Muted ? "🔇" : "🔊")
+                    </button>
                     <div class="party-picker-buttons">
                         <button type="button" class="party-pick @(PartyState.Intensity == 1 ? "selected" : "")"
                                 @onclick="() => SetPartyLevel(1)">🎈</button>
@@ -207,6 +213,12 @@ else
         await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
         if (PartyState.Enabled)
             await JS.InvokeVoidAsync("PartyMode.initAudio");
+    }
+
+    private async Task ToggleMute()
+    {
+        PartyState.SetMuted(!PartyState.Muted);
+        await JS.InvokeVoidAsync("PartyMode.setMuted", PartyState.Muted);
     }
 
     private async Task SetPartyLevel(int level)
