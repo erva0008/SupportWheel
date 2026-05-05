@@ -195,35 +195,33 @@ body.party-flash-chaos::before {
 }
 
 /* ===== Chaos mode: decorative emojis around UI ===== */
-.party-mode.party-chaos .header-grid > h1 {
+.party-mode.party-chaos .header-grid {
     position: relative;
 }
 
-.party-mode.party-chaos .header-grid > h1::before {
-    content: '🎉🔥🤯';
+.party-mode.party-chaos .header-grid::before {
+    content: '🎉🔥✨';
     position: absolute;
-    left: -2.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.2rem;
+    left: -1rem;
+    top: -1.5rem;
+    font-size: 1.1rem;
     animation: chaos-emoji-bounce 1.2s ease-in-out infinite alternate;
-    -webkit-text-fill-color: initial;
+    pointer-events: none;
 }
 
-.party-mode.party-chaos .header-grid > h1::after {
-    content: '🤯🔥🎉';
+.party-mode.party-chaos .header-grid::after {
+    content: '✨🔥🎉';
     position: absolute;
-    right: -2.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.2rem;
+    right: -1rem;
+    top: -1.5rem;
+    font-size: 1.1rem;
     animation: chaos-emoji-bounce 1.2s ease-in-out infinite alternate-reverse;
-    -webkit-text-fill-color: initial;
+    pointer-events: none;
 }
 
 @keyframes chaos-emoji-bounce {
-    0% { transform: translateY(-50%) scale(1) rotate(-5deg); }
-    100% { transform: translateY(-50%) scale(1.2) rotate(5deg); }
+    0% { transform: scale(1) rotate(-5deg); }
+    100% { transform: scale(1.2) rotate(5deg); }
 }
 
 /* Chaos: pulsing glow on spin button */
@@ -537,8 +535,8 @@ body.party-chaos-active {
     }
 
     /* Hide emoji decorations on mobile (overflow) */
-    .party-mode.party-chaos .header-grid > h1::before,
-    .party-mode.party-chaos .header-grid > h1::after {
+    .party-mode.party-chaos .header-grid::before,
+    .party-mode.party-chaos .header-grid::after {
         display: none;
     }
 }
