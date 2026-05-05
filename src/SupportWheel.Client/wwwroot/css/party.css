@@ -150,7 +150,7 @@ body.party-flash-chaos::before {
 }
 
 .party-mode.party-chaos .wiggle-text {
-    animation-duration: 0.4s;
+    animation-duration: 0.7s;
 }
 
 @keyframes wiggle-strong {
@@ -174,7 +174,7 @@ body.party-flash-chaos::before {
 }
 
 .party-mode.party-chaos .wheel-pulse {
-    animation: pulse-wheel 0.3s ease-in-out 6;
+    animation: pulse-wheel 0.8s ease-in-out 3;
 }
 
 /* ===== Winner spotlight glow ===== */
@@ -191,7 +191,7 @@ body.party-flash-chaos::before {
 }
 
 .party-mode.party-chaos .winner-spotlight {
-    animation-duration: 0.7s;
+    animation-duration: 1.2s;
 }
 
 /* ===== Chaos mode: decorative emojis around UI ===== */
@@ -226,7 +226,7 @@ body.party-flash-chaos::before {
 
 /* Chaos: pulsing glow on spin button */
 .party-mode.party-chaos .btn-glow {
-    animation: chaos-btn-pulse 0.8s ease-in-out infinite alternate;
+    animation: chaos-btn-pulse 1.5s ease-in-out infinite alternate;
 }
 
 @keyframes chaos-btn-pulse {
@@ -236,15 +236,15 @@ body.party-flash-chaos::before {
 
 /* Chaos: party-pick buttons wiggle */
 .party-mode.party-chaos .party-pick {
-    animation: chaos-wiggle 0.6s ease-in-out infinite alternate;
+    animation: chaos-wiggle 1s ease-in-out infinite alternate;
 }
 
 .party-mode.party-chaos .party-pick:nth-child(2) {
-    animation-delay: 0.2s;
+    animation-delay: 0.3s;
 }
 
 .party-mode.party-chaos .party-pick:nth-child(3) {
-    animation-delay: 0.4s;
+    animation-delay: 0.6s;
 }
 
 @keyframes chaos-wiggle {
@@ -390,7 +390,7 @@ body.party-flash-chaos::before {
 
 /* Pulsing glow on page during chaos */
 body.party-chaos-active {
-    animation: chaos-pulse 0.3s ease-in-out infinite alternate;
+    animation: chaos-pulse 1.2s ease-in-out infinite alternate;
     overflow: hidden;
 }
 
@@ -454,7 +454,7 @@ body.party-chaos-active {
 }
 
 .party-flash-overlay-chaos {
-    animation: flash-overlay-pulse 0.8s ease-in-out 5;
+    animation: flash-overlay-pulse 1.2s ease-in-out 3;
 }
 
 /* ===== Winner slot placeholder (prevents layout jump) ===== */
