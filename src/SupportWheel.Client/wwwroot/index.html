@@ -61,10 +61,119 @@
 
 <body>
     <div id="app">
-        <!-- SEO content visible to crawlers, replaced by Blazor on boot -->
-        <main style="max-width: 700px; margin: 2rem auto; padding: 1rem; font-family: sans-serif; color: #e2e8f0;">
+        <style>
+            .seo-loading {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                padding: 2rem;
+                font-family: 'Inter', sans-serif;
+                color: #e2e8f0;
+                text-align: center;
+                background: linear-gradient(135deg, #0f0c29, #1a1a4e, #24243e);
+            }
+            .seo-loading h1 {
+                font-size: 1.8rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+                background: linear-gradient(135deg, #34d399, #60a5fa);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+            .seo-loading h2 {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: #94a3b8;
+                margin-top: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+            .seo-loading p, .seo-loading li {
+                color: #94a3b8;
+                font-size: 0.95rem;
+                line-height: 1.6;
+            }
+            .seo-loading ol, .seo-loading ul {
+                text-align: left;
+                display: inline-block;
+                padding-left: 1.5rem;
+            }
+            /* Spinning wheel loader */
+            .wheel-spinner {
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                margin: 2rem auto;
+                position: relative;
+                animation: wheel-spin 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+                background: conic-gradient(
+                    #f472b6 0deg 45deg,
+                    #a78bfa 45deg 90deg,
+                    #60a5fa 90deg 135deg,
+                    #34d399 135deg 180deg,
+                    #fbbf24 180deg 225deg,
+                    #fb923c 225deg 270deg,
+                    #f87171 270deg 315deg,
+                    #c084fc 315deg 360deg
+                );
+                box-shadow: 0 0 40px rgba(96, 165, 250, 0.3), inset 0 0 30px rgba(0,0,0,0.4);
+            }
+            .wheel-spinner::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 24px;
+                height: 24px;
+                background: #1e293b;
+                border-radius: 50%;
+                border: 3px solid #60a5fa;
+                box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+            }
+            .wheel-pointer {
+                position: absolute;
+                top: -12px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 0;
+                height: 0;
+                border-left: 10px solid transparent;
+                border-right: 10px solid transparent;
+                border-top: 18px solid #34d399;
+                filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.6));
+                z-index: 1;
+            }
+            .wheel-container {
+                position: relative;
+                display: inline-block;
+            }
+            @keyframes wheel-spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            .loading-hint {
+                margin-top: 1rem;
+                font-size: 0.85rem;
+                color: #64748b;
+                animation: pulse-text 1.5s ease-in-out infinite;
+            }
+            @keyframes pulse-text {
+                0%, 100% { opacity: 0.6; }
+                50% { opacity: 1; }
+            }
+        </style>
+
+        <div class="seo-loading">
+            <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <div class="wheel-spinner"></div>
+            </div>
             <h1>Snurra Hjulet – Slumpa vinnare online</h1>
-            <p>Skriv in namn, alternativ eller vad som helst – snurra på hjulet och låt slumpen avgöra! Perfekt för att välja mat, aktiviteter, namn eller lottdragningar.</p>
+            <p class="loading-hint">Laddar...</p>
+
             <h2>Så fungerar det</h2>
             <ol>
                 <li>Skriv in dina alternativ (ett per rad)</li>
@@ -80,12 +189,8 @@
                 <li>API för utvecklare</li>
             </ul>
             <p>Gratis, ingen registrering krävs. Fungerar på mobil, surfplatta och dator.</p>
-        </main>
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+            <p>Skriv in namn, alternativ eller vad som helst – snurra på hjulet och låt slumpen avgöra! Perfekt för att välja mat, aktiviteter, namn eller lottdragningar.</p>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
