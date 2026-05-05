@@ -480,11 +480,12 @@ code {
     border-radius: 0.75rem;
     overflow: hidden;
     backdrop-filter: blur(8px);
-    width: fit-content;
+    width: 100%;
 }
 
 .count-picker__input {
-    width: 5rem;
+    flex: 1;
+    min-width: 0;
     padding: 0.55rem 0.75rem;
     border: none;
     background: transparent;
