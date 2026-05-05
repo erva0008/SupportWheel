@@ -300,8 +300,11 @@ body.party-chaos-active {
 /* When winner is in focused modal state, don't let chaos-zoom override positioning */
 .winner-highlight.winner-focused.chaos-winner-zoom {
     position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
     z-index: 10000 !important;
-    animation: none !important;
+    animation: winner-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
 }
 
 @keyframes winner-zoom-in {
@@ -345,6 +348,12 @@ body.party-chaos-active {
     animation: flash-overlay-pulse 0.4s ease-in-out 10;
 }
 
+/* ===== Winner slot placeholder (prevents layout jump) ===== */
+.winner-slot:has(.winner-focused),
+.winner-slot:has(.winner-shrinking) {
+    min-height: 120px;
+}
+
 /* ===== Winner focused modal (party mode, on win) ===== */
 .party-mode .winner-highlight.winner-focused {
     position: fixed !important;
@@ -352,6 +361,10 @@ body.party-chaos-active {
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
     z-index: 10000 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
     padding: 4rem 6rem !important;
     border-radius: 2rem !important;
     border: 2px solid rgba(52, 211, 153, 0.6) !important;
@@ -366,7 +379,7 @@ body.party-chaos-active {
 
 .party-mode .winner-highlight.winner-focused h3 {
     font-size: 3.2rem !important;
-    margin-bottom: 2rem !important;
+    margin: 0 !important;
     -webkit-text-fill-color: unset !important;
     color: #fff !important;
 }
@@ -374,6 +387,7 @@ body.party-chaos-active {
 .party-mode .winner-highlight.winner-focused .btn-glow {
     font-size: 1.2rem !important;
     padding: 0.8rem 2rem !important;
+    display: none !important;
 }
 
 @keyframes winner-pop {
@@ -382,10 +396,25 @@ body.party-chaos-active {
 }
 
 .party-mode .winner-highlight.winner-shrinking {
-    animation: winner-shrink 0.5s ease-in forwards !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    z-index: 10000 !important;
+    animation: winner-shrink 0.6s ease-out forwards !important;
 }
 
 @keyframes winner-shrink {
-    0% { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    100% { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0.85); opacity: 0; }
+}
+
+/* Smooth settle when card returns to normal flow after party focus */
+.party-mode .winner-highlight.winner-settling,
+.party-mode .winner-settling {
+    animation: winner-settle 0.5s ease-out forwards;
+}
+
+@keyframes winner-settle {
+    0% { opacity: 0; transform: translateY(-12px); }
+    100% { opacity: 1; transform: translateY(0); }
 }

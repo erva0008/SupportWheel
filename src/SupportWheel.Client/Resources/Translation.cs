@@ -45,6 +45,7 @@ public static class Translation
     public static string AlreadyPicked => GetString(nameof(AlreadyPicked));
     public static string RoundWinner => GetString(nameof(RoundWinner));
     public static string NextRound => GetString(nameof(NextRound));
+    public static string ShowResultButton => GetString(nameof(ShowResultButton));
     public static string Selected => GetString(nameof(Selected));
     public static string CopyLinkButton => GetString(nameof(CopyLinkButton));
     public static string SpinAgainButton => GetString(nameof(SpinAgainButton));

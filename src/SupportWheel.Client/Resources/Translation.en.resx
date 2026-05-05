@@ -123,6 +123,9 @@ Bowling</value>
   <data name="NextRound" xml:space="preserve">
     <value>🎲 Next round!</value>
   </data>
+  <data name="ShowResultButton" xml:space="preserve">
+    <value>🏆 Show result</value>
+  </data>
   <data name="Selected" xml:space="preserve">
     <value>🎉 Selected!</value>
   </data>
@@ -136,7 +139,7 @@ Bowling</value>
     <value>✏️ Edit names/count</value>
   </data>
   <data name="NewSpinButton" xml:space="preserve">
-    <value>➕ Start new draw</value>
+    <value>🔄 Start new draw</value>
   </data>
   <data name="LinkCopied" xml:space="preserve">
     <value>Link copied!</value>

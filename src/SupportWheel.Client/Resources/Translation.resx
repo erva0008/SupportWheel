@@ -123,6 +123,9 @@ Bowling</value>
   <data name="NextRound" xml:space="preserve">
     <value>🎲 Nästa runda!</value>
   </data>
+  <data name="ShowResultButton" xml:space="preserve">
+    <value>🏆 Visa resultat</value>
+  </data>
   <data name="Selected" xml:space="preserve">
     <value>🎉 Valda!</value>
   </data>
@@ -136,7 +139,7 @@ Bowling</value>
     <value>✏️ Ändra namn/antal</value>
   </data>
   <data name="NewSpinButton" xml:space="preserve">
-    <value>➕ Starta ny dragning</value>
+    <value>🔄 Starta ny dragning</value>
   </data>
   <data name="LinkCopied" xml:space="preserve">
     <value>Länk kopierad!</value>

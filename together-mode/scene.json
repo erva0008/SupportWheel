@@ -1,0 +1,107 @@
+{
+  "$schema": "https://schema.teams.microsoft.com/schema/v1.0/scene.json",
+  "name": "Barnkalas 🎉",
+  "canvas": {
+    "width": 1920,
+    "height": 1080,
+    "backgroundImage": "background.png"
+  },
+  "seats": [
+    {
+      "id": "seat1",
+      "x": 80,
+      "y": 220,
+      "width": 170,
+      "height": 240,
+      "rotation": -5
+    },
+    {
+      "id": "seat2",
+      "x": 330,
+      "y": 190,
+      "width": 170,
+      "height": 240,
+      "rotation": -3
+    },
+    {
+      "id": "seat3",
+      "x": 580,
+      "y": 175,
+      "width": 170,
+      "height": 240,
+      "rotation": 0
+    },
+    {
+      "id": "seat4",
+      "x": 830,
+      "y": 170,
+      "width": 170,
+      "height": 240,
+      "rotation": 0
+    },
+    {
+      "id": "seat5",
+      "x": 1080,
+      "y": 175,
+      "width": 170,
+      "height": 240,
+      "rotation": 0
+    },
+    {
+      "id": "seat6",
+      "x": 1330,
+      "y": 190,
+      "width": 170,
+      "height": 240,
+      "rotation": 3
+    },
+    {
+      "id": "seat7",
+      "x": 1580,
+      "y": 220,
+      "width": 170,
+      "height": 240,
+      "rotation": 5
+    },
+    {
+      "id": "seat8",
+      "x": 200,
+      "y": 560,
+      "width": 210,
+      "height": 290,
+      "rotation": -4
+    },
+    {
+      "id": "seat9",
+      "x": 530,
+      "y": 540,
+      "width": 210,
+      "height": 290,
+      "rotation": -2
+    },
+    {
+      "id": "seat10",
+      "x": 860,
+      "y": 530,
+      "width": 210,
+      "height": 290,
+      "rotation": 0
+    },
+    {
+      "id": "seat11",
+      "x": 1190,
+      "y": 540,
+      "width": 210,
+      "height": 290,
+      "rotation": 2
+    },
+    {
+      "id": "seat12",
+      "x": 1520,
+      "y": 560,
+      "width": 210,
+      "height": 290,
+      "rotation": 4
+    }
+  ]
+}

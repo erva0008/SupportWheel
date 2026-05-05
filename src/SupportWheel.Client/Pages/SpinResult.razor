@@ -66,49 +66,56 @@ else
                         style="max-width: 100%; height: auto;"></canvas>
             </div>
 
-            @* Sequential mode: round complete but not all rounds done *@
+            @* Sequential mode: round complete — show latest winner *@
             @if (isSequential && !roundInProgress && !allRoundsComplete && revealedWinners.Count > 0)
             {
-                <div class="glass-card p-4 mt-3 winner-highlight @(winnerFocused ? "winner-focused" : "") @(winnerShrinking ? "winner-shrinking" : "")">
-                    <h3 style="font-weight: 700; font-size: 1.3rem; margin-bottom: 0.5rem;
-                               color: var(--success);">
-                        @string.Format(Translation.RoundWinner, revealedWinners[^1])
-                    </h3>
-                    <button @onclick="NextRound" class="btn-glow mt-2">
-                        @Translation.NextRound
-                    </button>
+                <div class="winner-slot">
+                    <div class="glass-card p-4 mt-3 winner-highlight @(winnerFocused ? "winner-focused" : "") @(winnerShrinking ? "winner-shrinking" : "") @(winnerSettling ? "winner-settling" : "")">
+                        <h3 style="font-weight: 700; font-size: 1.3rem; margin-bottom: 0.5rem;
+                                   color: var(--success);">
+                            @string.Format(Translation.RoundWinner, revealedWinners[^1])
+                        </h3>
+                        @if (!lastRoundPending)
+                        {
+                            <button @onclick="NextRound" class="btn-glow mt-2">
+                                @Translation.NextRound
+                            </button>
+                        }
+                    </div>
                 </div>
             }
 
             @* Result section — shown after all animations complete *@
             @if (animationComplete)
             {
-                <div class="glass-card p-4 mt-3 winner-highlight @(winnerFocused ? "winner-focused" : "") @(winnerShrinking ? "winner-shrinking" : "") @(PartyState.EffectiveIntensity > 0 ? "winner-spotlight" : "")">
-                    <h3 style="font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem;
-                               background: linear-gradient(135deg, #34d399, #60a5fa);
-                               -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-                               background-clip: text;">
-                        @Translation.Selected
-                    </h3>
-                    <ul class="result-list">
-                        @if (isSequential)
-                        {
-                            @foreach (var name in revealedWinners)
+                <div class="winner-slot">
+                    <div class="glass-card p-4 mt-3 winner-highlight @(winnerFocused ? "winner-focused" : "") @(winnerShrinking ? "winner-shrinking" : "") @(winnerSettling ? "winner-settling" : "") @(PartyState.EffectiveIntensity > 0 ? "winner-spotlight" : "")">
+                        <h3 style="font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem;
+                                   background: linear-gradient(135deg, #34d399, #60a5fa);
+                                   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                                   background-clip: text;">
+                            @Translation.Selected
+                        </h3>
+                        <ul class="result-list">
+                            @if (isSequential)
                             {
-                                <li>✅ @name</li>
+                                @foreach (var name in revealedWinners)
+                                {
+                                    <li>✅ @name</li>
+                                }
                             }
-                        }
-                        else
-                        {
-                            @foreach (var name in spinData.Selected)
+                            else
                             {
-                                <li>✅ @name</li>
+                                @foreach (var name in spinData.Selected)
+                                {
+                                    <li>✅ @name</li>
+                                }
                             }
-                        }
-                    </ul>
+                        </ul>
+                    </div>
                 </div>
 
-                <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
+                <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap @(winnerFocused || winnerShrinking ? "d-none" : "") @(winnerSettling ? "winner-settling" : "")">
                     <button @onclick="CopyLink" class="btn-ghost">
                         @Translation.CopyLinkButton
                     </button>
@@ -124,7 +131,7 @@ else
                     <button @onclick="EditItems" class="btn-ghost">
                         @Translation.EditItemsButton
                     </button>
-                    <a href="/" class="btn-glow" style="text-decoration: none; font-size: 1rem; padding: 0.6rem 1.2rem;">
+                    <a href="/" class="btn-glow" style="text-decoration: none;">
                         @Translation.NewSpinButton
                     </a>
                 </div>
@@ -174,6 +181,8 @@ else
     private System.Threading.Timer? toastTimer;
     private bool winnerFocused;
     private bool winnerShrinking;
+    private bool winnerSettling;
+    private bool lastRoundPending; // Last round won but not yet shown final
     private System.Threading.Timer? winnerFocusTimer;
 
     // Sequential mode state
@@ -336,11 +345,26 @@ else
                         winnerFocused = false;
                         winnerShrinking = true;
                         StateHasChanged();
-                        // Remove shrinking class after animation
-                        Task.Delay(500).ContinueWith(_ => InvokeAsync(() =>
+                        // After shrink animation: settle into normal position
+                        Task.Delay(600).ContinueWith(_ => InvokeAsync(() =>
                         {
                             winnerShrinking = false;
+                            winnerSettling = true;
                             StateHasChanged();
+                            // Remove settling after animation, then auto-transition if last round
+                            Task.Delay(500).ContinueWith(_ => InvokeAsync(() =>
+                            {
+                                winnerSettling = false;
+                                if (lastRoundPending)
+                                {
+                                    // Auto-show final results after last round modal fades
+                                    Task.Delay(1500).ContinueWith(_ => InvokeAsync(() =>
+                                    {
+                                        FinishLastRound();
+                                    }));
+                                }
+                                StateHasChanged();
+                            }));
                         }));
                     });
                 }, null, 4000, Timeout.Infinite);
@@ -354,8 +378,8 @@ else
 
                 if (currentRound + 1 >= totalRounds)
                 {
-                    allRoundsComplete = true;
-                    animationComplete = true;
+                    // Mark last round pending — show round winner first, then transition to final
+                    lastRoundPending = true;
                 }
 
                 await InvokeAsync(StateHasChanged);
@@ -379,9 +403,22 @@ else
     {
         winnerFocused = false;
         winnerShrinking = false;
+        winnerSettling = false;
         winnerFocusTimer?.Dispose();
         currentRound++;
         needsAnimation = true;
+        StateHasChanged();
+    }
+
+    private void FinishLastRound()
+    {
+        winnerFocused = false;
+        winnerShrinking = false;
+        winnerSettling = false;
+        winnerFocusTimer?.Dispose();
+        lastRoundPending = false;
+        allRoundsComplete = true;
+        animationComplete = true;
         StateHasChanged();
     }
 
