@@ -9,6 +9,7 @@ public class PartyModeState
     public bool Enabled { get; private set; }
     public int Intensity { get; private set; } = 1;
     public bool ReducedMotion { get; private set; }
+    public bool Muted { get; private set; }
 
     /// <summary>
     /// Effective intensity accounting for reduced-motion preference.
@@ -36,11 +37,18 @@ public class PartyModeState
         OnChanged?.Invoke();
     }
 
-    public void Load(bool enabled, int intensity, bool reducedMotion)
+    public void SetMuted(bool muted)
+    {
+        Muted = muted;
+        OnChanged?.Invoke();
+    }
+
+    public void Load(bool enabled, int intensity, bool reducedMotion, bool muted = false)
     {
         Enabled = enabled;
         Intensity = Math.Clamp(intensity, 1, 3);
         ReducedMotion = reducedMotion;
+        Muted = muted;
         OnChanged?.Invoke();
     }
 }

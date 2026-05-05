@@ -42,11 +42,22 @@
             {
                 <div class="mb-4">
                     <div class="party-picker">
-                        <button type="button"
-                                class="party-toggle @(PartyState.Enabled ? "on" : "")"
-                                @onclick="ToggleParty">
-                            🎉 @Translation.PartyMode
-                        </button>
+                        <div class="party-header">
+                            <button type="button"
+                                    class="party-toggle @(PartyState.Enabled ? "on" : "")"
+                                    @onclick="ToggleParty">
+                                🎉 @Translation.PartyMode
+                            </button>
+                            @if (PartyState.Enabled)
+                            {
+                                <button type="button"
+                                        class="party-mute @(PartyState.Muted ? "muted" : "")"
+                                        @onclick="ToggleMute"
+                                        title="@(PartyState.Muted ? "Unmute" : "Mute")">
+                                    @(PartyState.Muted ? "🔇" : "🔊")
+                                </button>
+                            }
+                        </div>
                         @if (PartyState.Enabled)
                         {
                             <div class="party-levels">
@@ -226,7 +237,7 @@
         {
             var state = await JS.InvokeAsync<PartyStateDto>("PartyMode.loadState");
             var reducedMotion = await JS.InvokeAsync<bool>("PartyMode.prefersReducedMotion");
-            PartyState.Load(state.Enabled, state.Intensity, reducedMotion);
+            PartyState.Load(state.Enabled, state.Intensity, reducedMotion, state.Muted);
             await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
             StateHasChanged();
         }
@@ -239,6 +250,12 @@
         await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
         if (PartyState.Enabled)
             await JS.InvokeVoidAsync("PartyMode.initAudio");
+    }
+
+    private async Task ToggleMute()
+    {
+        PartyState.SetMuted(!PartyState.Muted);
+        await JS.InvokeVoidAsync("PartyMode.setMuted", PartyState.Muted);
     }
 
     private async Task SetPartyLevel(int level)
@@ -263,7 +280,7 @@
         await JS.InvokeVoidAsync("PartyMode.setBodyClass", false, 0);
     }
 
-    private record PartyStateDto(bool Enabled, int Intensity);
+    private record PartyStateDto(bool Enabled, int Intensity, bool Muted);
 
     private void OnCultureChanged() => InvokeAsync(StateHasChanged);
 

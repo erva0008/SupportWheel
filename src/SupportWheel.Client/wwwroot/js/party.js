@@ -7,6 +7,26 @@ window.PartyMode = {
     _drumTimeout: null,
     _emojiContainer: null,
     _disposed: false,
+    _muted: false,
+
+    /**
+     * Set muted state. When muted, audio functions are no-ops.
+     */
+    setMuted: function (muted) {
+        this._muted = !!muted;
+        try {
+            localStorage.setItem('party-muted', this._muted ? '1' : '0');
+        } catch (e) { /* ignore */ }
+    },
+
+    /**
+     * Load muted state from localStorage.
+     */
+    loadMuted: function () {
+        try {
+            return localStorage.getItem('party-muted') === '1';
+        } catch (e) { return false; }
+    },
 
     /**
      * Initialize/resume AudioContext. MUST be called from a user gesture (click).
@@ -73,7 +93,7 @@ window.PartyMode = {
      * Play drum roll: rapid snare taps that accelerate (recognizable drum roll).
      */
     playDrumRoll: function (intensity) {
-        if (!this._audioCtx) return;
+        if (this._muted || !this._audioCtx) return;
         var ctx = this._audioCtx;
         // Match wheel spin duration (5s) — roll ends just before wheel stops
         var duration = intensity >= 3 ? 4.5 : intensity >= 2 ? 4.0 : 3.5;
@@ -137,6 +157,7 @@ window.PartyMode = {
      * Designed to be unmissable in a room full of people.
      */
     playFanfare: function (intensity) {
+        if (this._muted) return;
         if (!this._audioCtx) {
                 return;
         }
@@ -396,13 +417,15 @@ window.PartyMode = {
     loadState: function () {
         try {
             var raw = localStorage.getItem('supportwheel-party');
+            var muted = this.loadMuted();
+            this._muted = muted;
             if (raw) {
                 var state = JSON.parse(raw);
                 // Always start disabled on page load — intensity is remembered
-                return { enabled: false, intensity: state.intensity || 1 };
+                return { enabled: false, intensity: state.intensity || 1, muted: muted };
             }
         } catch (e) { }
-        return { enabled: false, intensity: 1 };
+        return { enabled: false, intensity: 1, muted: false };
     },
 
     /**
