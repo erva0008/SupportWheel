@@ -12,15 +12,12 @@ window.PartyMode = {
      * Initialize/resume AudioContext. MUST be called from a user gesture (click).
      */
     initAudio: function () {
-        console.log('[DIAG] PartyMode.initAudio called');
         if (!this._audioCtx) {
             this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('[DIAG] AudioContext created, state:', this._audioCtx.state);
-        }
+            }
         if (this._audioCtx.state === 'suspended') {
             this._audioCtx.resume();
-            console.log('[DIAG] AudioContext resumed');
-        }
+            }
     },
 
     /**
@@ -47,7 +44,6 @@ window.PartyMode = {
      * Uses both body class animation AND a fullscreen overlay for guaranteed visibility.
      */
     triggerFlash: function (intensity) {
-        console.log('[DIAG] PartyMode.triggerFlash intensity:', intensity);
         var body = document.body;
         body.classList.remove('party-flash-mild', 'party-flash-medium', 'party-flash-chaos');
         void body.offsetWidth;
@@ -141,10 +137,8 @@ window.PartyMode = {
      * Designed to be unmissable in a room full of people.
      */
     playFanfare: function (intensity) {
-        console.log('[DIAG] PartyMode.playFanfare intensity:', intensity);
         if (!this._audioCtx) {
-            console.log('[DIAG] playFanfare: no AudioContext!');
-            return;
+                return;
         }
         var ctx = this._audioCtx;
         if (ctx.state === 'suspended') {
@@ -328,7 +322,6 @@ window.PartyMode = {
      * Called when spin starts — triggers drum roll + visual prep.
      */
     onSpinStart: function (intensity) {
-        console.log('[DIAG] PartyMode.onSpinStart intensity:', intensity);
         this._disposed = false;
         if (intensity >= 2) {
             this.playDrumRoll(intensity);
@@ -339,10 +332,8 @@ window.PartyMode = {
      * Called when spin completes — triggers flash + fanfare + emoji + spotlight.
      */
     onSpinComplete: function (intensity) {
-        console.log('[DIAG] PartyMode.onSpinComplete intensity:', intensity);
         if (this._disposed) {
-            console.log('[DIAG] onSpinComplete: disposed, skipping');
-            return;
+                return;
         }
         this.triggerFlash(intensity);
         this.playFanfare(intensity);
@@ -358,7 +349,6 @@ window.PartyMode = {
      * Winner stays centered and zoomed.
      */
     triggerChaos: function () {
-        console.log('[DIAG] PartyMode.triggerChaos');
         var body = document.body;
         body.classList.add('party-chaos-active');
 
