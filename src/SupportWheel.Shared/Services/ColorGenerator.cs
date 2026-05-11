@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace SupportWheel.Shared.Services;
 
 /// <summary>
@@ -14,7 +16,7 @@ public static class ColorGenerator
         for (int i = 0; i < count; i++)
         {
             var hue = (i * GoldenAngle) % 360;
-            colors[i] = $"hsl({hue:F1}, 68%, 58%)";
+            colors[i] = string.Create(CultureInfo.InvariantCulture, $"hsl({hue:F1}, 68%, 58%)");
         }
         return colors;
     }
