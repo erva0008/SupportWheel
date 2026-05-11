@@ -261,6 +261,9 @@ Bowling</value>
   <data name="ApiBackToWheel" xml:space="preserve">
     <value>← Back to the wheel</value>
   </data>
+  <data name="AllowDuplicates" xml:space="preserve">
+    <value>Allow duplicates anyway</value>
+  </data>
   <data name="PartyMode" xml:space="preserve">
     <value>Party Mode</value>
   </data>

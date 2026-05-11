@@ -31,11 +31,33 @@
                     <div class="alert alert-warning mt-2 mb-0" role="alert">
                         @string.Format(Translation.DuplicateWarning, string.Join(", ", Duplicates))
                     </div>
+                    <div class="form-check mt-1" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" @bind="allowDuplicates" id="allowDuplicatesCheck"
+                               class="form-check-input" style="width: 1.2em; height: 1.2em;" />
+                        <label for="allowDuplicatesCheck" class="form-check-label" style="color: var(--text-secondary); font-weight: 500;">
+                            @Translation.AllowDuplicates
+                        </label>
+                    </div>
                 }
 
                 <div class="mt-2 text-end" style="color: var(--text-secondary); font-size: 0.85rem;">
                     @string.Format(Translation.ItemsEntered, ParsedItems.Length)
                 </div>
+
+                @if (ParsedItems.Length > 0)
+                {
+                    var colors = ColorGenerator.GenerateColors(ParsedItems.Length);
+                    <div class="items-preview-list mt-2">
+                        @for (int i = 0; i < ParsedItems.Length; i++)
+                        {
+                            var idx = i;
+                            <div class="items-preview-item">
+                                <span class="color-dot" style="background: @colors[idx];"></span>
+                                <span>@ParsedItems[idx]</span>
+                            </div>
+                        }
+                    </div>
+                }
             </div>
 
             @if (ParsedItems.Length >= 2)
@@ -194,6 +216,7 @@
     private int count = 1;
     private bool oneAtATime = true;
     private bool selectAll;
+    private bool allowDuplicates;
     private string? errorMessage;
     private List<SavedWheel> savedWheels = [];
     private bool wheelSaved;
@@ -330,12 +353,16 @@
             count = MaxCount;
         else if (count > MaxCount)
             count = MaxCount;
+
+        // Reset override when duplicates are resolved
+        if (Duplicates.Count == 0)
+            allowDuplicates = false;
     }
 
     private bool CanSpin => ParsedItems.Length >= 2
                             && count >= 1
                             && count <= ParsedItems.Length
-                            && Duplicates.Count == 0;
+                            && (Duplicates.Count == 0 || allowDuplicates);
 
     private void DoSpin()
     {
@@ -355,7 +382,7 @@
         }
 
         var duplicates = Duplicates;
-        if (duplicates.Count > 0)
+        if (duplicates.Count > 0 && !allowDuplicates)
         {
             errorMessage = string.Format(Translation.ErrorDuplicates, string.Join(", ", duplicates));
             return;

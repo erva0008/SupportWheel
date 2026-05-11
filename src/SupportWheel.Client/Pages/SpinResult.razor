@@ -392,6 +392,12 @@ else
                 {
                     // Mark last round pending — show round winner first, then transition to final
                     lastRoundPending = true;
+
+                    // When party mode is off, auto-transition to final results after brief display
+                    if (PartyState.EffectiveIntensity == 0)
+                    {
+                        _ = Task.Delay(1500).ContinueWith(_ => InvokeAsync(FinishLastRound));
+                    }
                 }
 
                 await InvokeAsync(StateHasChanged);

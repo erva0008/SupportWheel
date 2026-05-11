@@ -34,6 +34,7 @@ public static class Translation
     public static string SpinButton => GetString(nameof(SpinButton));
     public static string ItemsEntered => GetString(nameof(ItemsEntered));
     public static string OneAtATime => GetString(nameof(OneAtATime));
+    public static string AllowDuplicates => GetString(nameof(AllowDuplicates));
 
     // SpinResult page
     public static string PageTitleResult => GetString(nameof(PageTitleResult));
