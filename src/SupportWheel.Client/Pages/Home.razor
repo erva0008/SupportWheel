@@ -18,13 +18,38 @@
                 <label for="itemsInput" class="form-label">
                     @Translation.EnterOnePerLine
                 </label>
-                <textarea @bind="itemsText"
-                          @bind:event="oninput"
-                          @bind:after="OnItemsChanged"
-                          id="itemsInput"
-                          class="form-control"
-                          rows="8"
-                          placeholder="@Translation.PlaceholderItems"></textarea>
+                <div class="textarea-with-gutter">
+                    <div class="color-gutter" id="colorGutter">
+                        @{
+                            var allLines = itemsText.Split('\n');
+                            var gutterColors = ColorGenerator.GenerateColors(ParsedItems.Length);
+                            int colorIdx = 0;
+                        }
+                        @for (int i = 0; i < allLines.Length; i++)
+                        {
+                            var line = allLines[i].Trim();
+                            if (!string.IsNullOrWhiteSpace(line) && colorIdx < gutterColors.Length)
+                            {
+                                <div class="gutter-line">
+                                    <span class="color-dot" style="background: @gutterColors[colorIdx];"></span>
+                                </div>
+                                colorIdx++;
+                            }
+                            else
+                            {
+                                <div class="gutter-line"></div>
+                            }
+                        }
+                    </div>
+                    <textarea @bind="itemsText"
+                              @bind:event="oninput"
+                              @bind:after="OnItemsChanged"
+                              id="itemsInput"
+                              class="form-control"
+                              rows="8"
+                              placeholder="@Translation.PlaceholderItems"
+                              onscroll="document.getElementById('colorGutter').scrollTop=this.scrollTop"></textarea>
+                </div>
 
                 @if (Duplicates.Count > 0)
                 {
@@ -44,20 +69,7 @@
                     @string.Format(Translation.ItemsEntered, ParsedItems.Length)
                 </div>
 
-                @if (ParsedItems.Length > 0)
-                {
-                    var colors = ColorGenerator.GenerateColors(ParsedItems.Length);
-                    <div class="items-preview-list mt-2">
-                        @for (int i = 0; i < ParsedItems.Length; i++)
-                        {
-                            var idx = i;
-                            <div class="items-preview-item">
-                                <span class="color-dot" style="background: @colors[idx];"></span>
-                                <span>@ParsedItems[idx]</span>
-                            </div>
-                        }
-                    </div>
-                }
+
             </div>
 
             @if (ParsedItems.Length >= 2)
