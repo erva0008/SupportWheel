@@ -772,18 +772,12 @@ window.WheelCanvas = {
         const outerRingWidth = 8;
         const radius = size / 2 - 20 - outerRingWidth;
         const N = items.length;
-        const K = selectedIndices.length;
         const segmentAngle = (2 * Math.PI) / N;
 
-        const arranged = this._arrangeItems(items, selectedIndices);
-        const displayItems = arranged.displayItems;
-        const originalIndices = arranged.originalIndices;
-
         const baseColors = this._generateColors(N);
-        const colors = originalIndices.map(oi => baseColors[oi]);
 
         // Render static frame at rotation=0
         ctx.clearRect(0, 0, size, size);
-        WheelCanvas._renderFrame(ctx, size, center, radius, segmentAngle, N, displayItems, colors, 0, outerRingWidth);
+        WheelCanvas._renderFrame(ctx, size, center, radius, segmentAngle, N, items, baseColors, 0, outerRingWidth);
     }
 };
