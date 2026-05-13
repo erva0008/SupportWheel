@@ -125,25 +125,27 @@ window.WheelCanvas = {
         }
 
         const winnerPosSet = new Set(winnerPositions);
+        const selectedSet = new Set(selectedIndices);
         const displayItems = new Array(N);
+        const originalIndices = new Array(N);
 
         // Place winners at their target positions
         for (let j = 0; j < K; j++) {
             displayItems[winnerPositions[j]] = items[selectedIndices[j]];
+            originalIndices[winnerPositions[j]] = selectedIndices[j];
         }
 
         // Fill non-winners in remaining slots, preserving their relative order
-        const nonWinners = items.filter(function (_, i) {
-            return !selectedIndices.includes(i);
-        });
-        let nwIdx = 0;
-        for (let i = 0; i < N; i++) {
-            if (!winnerPosSet.has(i)) {
-                displayItems[i] = nonWinners[nwIdx++];
-            }
+        let ni = 0;
+        for (let pos = 0; pos < N; pos++) {
+            if (winnerPosSet.has(pos)) continue;
+            while (selectedSet.has(ni)) ni++;
+            displayItems[pos] = items[ni];
+            originalIndices[pos] = ni;
+            ni++;
         }
 
-        return { displayItems: displayItems, winnerDisplayIndices: winnerPositions };
+        return { displayItems: displayItems, winnerDisplayIndices: winnerPositions, originalIndices: originalIndices };
     },
 
     /**
@@ -331,6 +333,7 @@ window.WheelCanvas = {
         const displayItems = arranged.displayItems;
         const winnerDisplayIndices = arranged.winnerDisplayIndices;
         const winnerDisplaySet = new Set(winnerDisplayIndices);
+        const originalIndices = arranged.originalIndices;
 
         // Pointer angles — aligned to the actual winner segment center positions.
         // Winners sit at display indices winnerDisplayIndices[j], so each pointer
@@ -350,7 +353,8 @@ window.WheelCanvas = {
         const extraRotations = 5 + Math.floor(Math.random() * 4);
         const totalRotation = finalAlignRotation + extraRotations * 2 * Math.PI;
 
-        const colors = this._generateColors(N);
+        const baseColors = this._generateColors(N);
+        const colors = originalIndices.map(oi => baseColors[oi]);
 
         const duration = 5000;
         let startTime = null;
@@ -774,6 +778,7 @@ window.WheelCanvas = {
         const arranged = this._arrangeItems(items, selectedIndices);
         const displayItems = arranged.displayItems;
         const winnerDisplayIndices = arranged.winnerDisplayIndices;
+        const originalIndices = arranged.originalIndices;
 
         // Pointer angles — one per winner, same formula as startSpin
         const pointerAngles = [];
@@ -781,7 +786,8 @@ window.WheelCanvas = {
             pointerAngles.push(-Math.PI / 2 + winnerDisplayIndices[j] * segmentAngle);
         }
 
-        const colors = this._generateColors(N);
+        const baseColors = this._generateColors(N);
+        const colors = originalIndices.map(oi => baseColors[oi]);
 
         // Render static frame at rotation=0
         ctx.clearRect(0, 0, size, size);
