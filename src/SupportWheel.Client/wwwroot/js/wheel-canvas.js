@@ -744,12 +744,7 @@ window.WheelCanvas = {
             }
         }
 
-        // Initial draw, then start animation after a brief pause
-        drawWheel(0);
-        this._delayTimeoutId = setTimeout(function () {
-            self._delayTimeoutId = null;
-            self._animFrameId = requestAnimationFrame(animate);
-        }, 500);
+        self._animFrameId = requestAnimationFrame(animate);
     },
 
     /**
