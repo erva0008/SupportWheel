@@ -162,6 +162,148 @@ window.WheelCanvas = {
     },
 
     /**
+     * Render one static frame of the wheel (segments + outer ring + center circle).
+     * Does NOT draw pointers — callers are responsible for that.
+     * Shared by startSpin's drawWheel and drawIdle.
+     *
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {number} size          - Canvas width/height in px
+     * @param {number} center        - center = size/2
+     * @param {number} radius        - Wheel radius (excluding outer ring)
+     * @param {number} segmentAngle  - Radians per segment (2π / N)
+     * @param {number} N             - Total number of segments
+     * @param {string[]} displayItems - Labels in display order
+     * @param {string[]} colors      - CSS color per segment
+     * @param {number} rotation      - Current wheel rotation in radians
+     * @param {number} outerRingWidth - Width of the decorative outer ring in px
+     */
+    _renderFrame: function (ctx, size, center, radius, segmentAngle, N, displayItems, colors, rotation, outerRingWidth) {
+        function lightenColor(color, amount) {
+            var match = color.match(/hsl\(\s*([\d.]+),\s*([\d.]+)%,\s*([\d.]+)%\)/);
+            if (match) {
+                var h = parseFloat(match[1]);
+                var s = parseFloat(match[2]);
+                var l = Math.min(100, parseFloat(match[3]) + amount);
+                return 'hsl(' + h + ', ' + s + '%, ' + l + '%)';
+            }
+            return color;
+        }
+
+        function truncateName(name) {
+            return name.length > 12 ? name.substring(0, 11) + '\u2026' : name;
+        }
+
+        var fontSize = Math.max(12, Math.min(18, 200 / N));
+
+        // Draw segments
+        for (var i = 0; i < N; i++) {
+            var startAng = rotation + segmentAngle * i;
+            var endAng = startAng + segmentAngle;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(center, center);
+            ctx.arc(center, center, radius, startAng, endAng);
+            ctx.closePath();
+
+            var midAngle = (startAng + endAng) / 2;
+            var gx = center + radius * 0.5 * Math.cos(midAngle);
+            var gy = center + radius * 0.5 * Math.sin(midAngle);
+            var segGrad = ctx.createRadialGradient(center, center, radius * 0.15, gx, gy, radius);
+            segGrad.addColorStop(0, lightenColor(colors[i % colors.length], 20));
+            segGrad.addColorStop(1, colors[i % colors.length]);
+            ctx.fillStyle = segGrad;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Draw text labels on top of segments
+        for (var i = 0; i < N; i++) {
+            var startAng = rotation + segmentAngle * i;
+            var midAng = startAng + segmentAngle / 2;
+            var normalizedAng = ((midAng % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+            var flipText = normalizedAng > Math.PI / 2 && normalizedAng < 3 * Math.PI / 2;
+            ctx.save();
+            ctx.translate(center, center);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold ' + fontSize + 'px "Segoe UI", system-ui, sans-serif';
+            if (flipText) {
+                ctx.rotate(midAng + Math.PI);
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.35)';
+                ctx.shadowBlur = 3;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                ctx.fillText(truncateName(displayItems[i]), -(radius - 18), 0);
+            } else {
+                ctx.rotate(midAng);
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.35)';
+                ctx.shadowBlur = 3;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                ctx.fillText(truncateName(displayItems[i]), radius - 18, 0);
+            }
+            ctx.restore();
+        }
+
+        // Draw outer decorative ring
+        var outerR = radius + outerRingWidth;
+        var grad = ctx.createRadialGradient(center, center, radius, center, center, outerR);
+        grad.addColorStop(0, '#4a4a5a');
+        grad.addColorStop(0.5, '#5c5c6e');
+        grad.addColorStop(1, '#3a3a48');
+        ctx.beginPath();
+        ctx.arc(center, center, outerR, 0, 2 * Math.PI);
+        ctx.arc(center, center, radius, 0, 2 * Math.PI, true);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(center, center, outerR, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(center, center, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw center circle (no emoji — idle/spinning view)
+        var centerR = 30;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(center, center, centerR, 0, 2 * Math.PI);
+        var cGrad = ctx.createRadialGradient(
+            center - centerR * 0.25, center - centerR * 0.25, centerR * 0.1,
+            center, center, centerR
+        );
+        cGrad.addColorStop(0, '#ffffff');
+        cGrad.addColorStop(1, '#e0e0e8');
+        ctx.fillStyle = cGrad;
+        ctx.fill();
+        ctx.restore();
+        ctx.beginPath();
+        ctx.arc(center, center, centerR, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#4a4a5a';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(center, center, centerR - 3, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    },
+
+    /**
      * Start the spin animation.
      * @param {string} canvasId - The canvas element ID
      * @param {string[]} items - All items on the wheel
@@ -400,48 +542,40 @@ window.WheelCanvas = {
 
         /** Draw text label for a segment with shadow for readability. */
         function drawSegmentText(startAng, text, style) {
+            var midAng = startAng + segmentAngle / 2;
+            var normalizedAng = ((midAng % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+            var flipText = normalizedAng > Math.PI / 2 && normalizedAng < 3 * Math.PI / 2;
             ctx.save();
             ctx.translate(center, center);
-            ctx.rotate(startAng + segmentAngle / 2);
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'middle';
-
-            // Text shadow for contrast
-            ctx.shadowColor = 'rgba(0,0,0,0.35)';
-            ctx.shadowBlur = 3;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
-
             ctx.fillStyle = style.color;
             ctx.font = style.font;
-            ctx.fillText(truncateName(text), radius - 18, 0);
-
+            if (flipText) {
+                ctx.rotate(midAng + Math.PI);
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                // Text shadow for contrast
+                ctx.shadowColor = 'rgba(0,0,0,0.35)';
+                ctx.shadowBlur = 3;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                ctx.fillText(truncateName(text), -(radius - 18), 0);
+            } else {
+                ctx.rotate(midAng);
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                // Text shadow for contrast
+                ctx.shadowColor = 'rgba(0,0,0,0.35)';
+                ctx.shadowBlur = 3;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                ctx.fillText(truncateName(text), radius - 18, 0);
+            }
             ctx.restore();
         }
 
         function drawWheel(rotation) {
             ctx.clearRect(0, 0, size, size);
-
-            var fontSize = Math.max(12, Math.min(18, 200 / N));
-
-            // Draw segments
-            for (let i = 0; i < N; i++) {
-                var startAng = rotation + segmentAngle * i;
-                var endAng = startAng + segmentAngle;
-                drawSegment(i, startAng, endAng, colors[i % colors.length], 1.0);
-            }
-
-            // Draw text on top of all segments (avoids clipping by neighbors)
-            for (let i = 0; i < N; i++) {
-                var startAng = rotation + segmentAngle * i;
-                drawSegmentText(startAng, displayItems[i], {
-                    color: '#fff',
-                    font: 'bold ' + fontSize + 'px "Segoe UI", system-ui, sans-serif'
-                });
-            }
-
-            drawOuterRing();
-            drawCenterCircle();
+            WheelCanvas._renderFrame(ctx, size, center, radius, segmentAngle, N, displayItems, colors, rotation, outerRingWidth);
             drawPointers(false);
         }
 
@@ -612,5 +746,83 @@ window.WheelCanvas = {
             self._delayTimeoutId = null;
             self._animFrameId = requestAnimationFrame(animate);
         }, 500);
+    },
+
+    /**
+     * Draw the wheel statically at rotation=0 with no animation.
+     * Cancels any pending animation before drawing.
+     *
+     * @param {string} canvasId       - The canvas element ID
+     * @param {string[]} items        - All items on the wheel
+     * @param {number[]} selectedIndices - Indices of the "selected" items (determines pointer placement)
+     */
+    drawIdle: function (canvasId, items, selectedIndices) {
+        this._cancelPending();
+
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const size = canvas.width;
+        const center = size / 2;
+        const outerRingWidth = 8;
+        const radius = size / 2 - 20 - outerRingWidth;
+        const N = items.length;
+        const K = selectedIndices.length;
+        const segmentAngle = (2 * Math.PI) / N;
+
+        const arranged = this._arrangeItems(items, selectedIndices);
+        const displayItems = arranged.displayItems;
+        const winnerDisplayIndices = arranged.winnerDisplayIndices;
+
+        // Pointer angles — one per winner, same formula as startSpin
+        const pointerAngles = [];
+        for (let j = 0; j < K; j++) {
+            pointerAngles.push(-Math.PI / 2 + winnerDisplayIndices[j] * segmentAngle);
+        }
+
+        const colors = this._generateColors(N);
+
+        // Render static frame at rotation=0
+        ctx.clearRect(0, 0, size, size);
+        WheelCanvas._renderFrame(ctx, size, center, radius, segmentAngle, N, displayItems, colors, 0, outerRingWidth);
+
+        // Draw non-glowing pointers (same geometry as startSpin's drawPointers(false))
+        var pointerLen = 20;
+        var halfBase = 10;
+        for (let j = 0; j < K; j++) {
+            var angle = pointerAngles[j];
+            var tipR = radius - 4;
+            var baseR = radius + outerRingWidth + pointerLen;
+            var tipX = center + tipR * Math.cos(angle);
+            var tipY = center + tipR * Math.sin(angle);
+            var perpX = -Math.sin(angle);
+            var perpY = Math.cos(angle);
+            var baseX = center + baseR * Math.cos(angle);
+            var baseY = center + baseR * Math.sin(angle);
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+
+            ctx.beginPath();
+            ctx.moveTo(tipX, tipY);
+            ctx.lineTo(baseX + halfBase * perpX, baseY + halfBase * perpY);
+            ctx.lineTo(baseX - halfBase * perpX, baseY - halfBase * perpY);
+            ctx.closePath();
+
+            var ptrGrad = ctx.createLinearGradient(baseX, baseY, tipX, tipY);
+            ptrGrad.addColorStop(0, '#2c2c3a');
+            ptrGrad.addColorStop(1, '#4a4a5a');
+            ctx.fillStyle = ptrGrad;
+            ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+            ctx.lineWidth = 1.5;
+
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
     }
 };

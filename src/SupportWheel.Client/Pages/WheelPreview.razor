@@ -1,0 +1,624 @@
+@page "/wheel"
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject CultureState CultureState
+@inject PartyModeState PartyState
+@inject SavedWheelService SavedWheelService
+
+<PageTitle>@Translation.PageTitleWheel</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8 text-center">
+
+        @* Party controls — toggle + levels + mute *@
+        <div class="mb-3 d-flex justify-content-center align-items-center gap-2" style="font-size: 0.8rem;">
+            <button type="button"
+                    class="party-toggle @(PartyState.Enabled ? "on" : "")"
+                    @onclick="ToggleParty"
+                    style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">
+                🎉 @Translation.PartyMode
+            </button>
+            @if (PartyState.Enabled)
+            {
+                <button type="button"
+                        class="party-mute @(PartyState.Muted ? "muted" : "")"
+                        @onclick="ToggleMute"
+                        title="@(PartyState.Muted ? "Unmute" : "Mute")">
+                    @(PartyState.Muted ? "🔇" : "🔊")
+                </button>
+                <div class="party-picker-buttons">
+                    <button type="button" class="party-pick @(PartyState.Intensity == 1 ? "selected" : "")"
+                            @onclick="() => SetPartyLevel(1)">🎈</button>
+                    <button type="button" class="party-pick @(PartyState.Intensity == 2 ? "selected" : "")"
+                            @onclick="() => SetPartyLevel(2)">🎉</button>
+                    <button type="button" class="party-pick @(PartyState.Intensity == 3 ? "selected" : "")"
+                            @onclick="() => SetPartyLevel(3)">🤯</button>
+                </div>
+            }
+        </div>
+
+        @* Sequential mode: round tracker *@
+        @if (isSequential && wheelState != WheelState.AllComplete)
+        {
+            <div class="glass-card p-3 mb-3" style="font-size: 0.95rem;">
+                <span style="color: var(--text-secondary);">@Translation.RoundLabel</span>
+                <strong style="color: var(--accent-light);">@(currentRound + 1)</strong>
+                <span style="color: var(--text-secondary);">@Translation.OfLabel @totalRounds</span>
+
+                @if (revealedWinners.Count > 0)
+                {
+                    <div class="mt-2" style="font-size: 0.85rem; color: var(--text-secondary);">
+                        @string.Format(Translation.AlreadyPicked, string.Join(", ", revealedWinners))
+                    </div>
+                }
+            </div>
+        }
+
+        @* Wheel canvas — pointers are drawn on the canvas itself *@
+        <div class="wheel-wrapper mb-4">
+            <canvas id="wheelCanvas" width="500" height="500"
+                    style="max-width: 100%; height: auto;"></canvas>
+        </div>
+
+        @* Sequential mode: round complete winner card *@
+        @if (isSequential && wheelState == WheelState.RoundComplete && revealedWinners.Count > 0)
+        {
+            <div class="winner-slot">
+                <div class="glass-card p-4 mt-3 winner-highlight @(winnerFocused ? "winner-focused" : "") @(winnerShrinking ? "winner-shrinking" : "") @(winnerSettling ? "winner-settling" : "")">
+                    <h3 style="font-weight: 700; font-size: 1.3rem; margin-bottom: 0.5rem;
+                               color: var(--success);">
+                        @string.Format(Translation.RoundWinner, revealedWinners[^1])
+                    </h3>
+                    @if (!lastRoundPending)
+                    {
+                        <button @onclick="NextRound" class="btn-glow mt-2">
+                            @Translation.NextRound
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+
+        @* All complete: final winner list *@
+        @if (wheelState == WheelState.AllComplete)
+        {
+            <div class="winner-slot">
+                <div class="glass-card p-4 mt-3 winner-highlight @(winnerFocused ? "winner-focused" : "") @(winnerShrinking ? "winner-shrinking" : "") @(winnerSettling ? "winner-settling" : "") @(PartyState.EffectiveIntensity > 0 ? "winner-spotlight" : "")">
+                    <h3 style="font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem;
+                               background: linear-gradient(135deg, #34d399, #60a5fa);
+                               -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                               background-clip: text;">
+                        @Translation.Selected
+                    </h3>
+                    <ul class="result-list">
+                        @if (isSequential)
+                        {
+                            @foreach (var name in revealedWinners)
+                            {
+                                <li>✅ @name</li>
+                            }
+                        }
+                        else
+                        {
+                            @foreach (var name in spinData!.Selected)
+                            {
+                                <li>✅ @name</li>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap @(winnerFocused || winnerShrinking ? "d-none" : "") @(winnerSettling ? "winner-settling" : "")">
+                @if (isSequential)
+                {
+                    <button @onclick="ResetWheel" class="btn-ghost">
+                        @Translation.ResetWheelButton
+                    </button>
+                }
+                else
+                {
+                    <button @onclick="SpinAgain" class="btn-ghost">
+                        @Translation.SpinAgainWheelButton
+                    </button>
+                }
+                <button @onclick="CopyLink" class="btn-ghost">
+                    @Translation.CopyLinkButton
+                </button>
+                @if (!showSaveInput)
+                {
+                    <button @onclick="BeginSave" class="btn-ghost">
+                        @Translation.SaveWheel
+                    </button>
+                }
+                <button @onclick="EditItems" class="btn-ghost">
+                    @Translation.EditItemsButton
+                </button>
+            </div>
+
+            @if (showSaveInput)
+            {
+                <div class="d-flex gap-2 mt-3 align-items-center justify-content-center">
+                    <input @bind="saveWheelName" @bind:event="oninput"
+                           class="form-control" style="max-width: 250px;"
+                           placeholder="@Translation.SaveWheelPrompt"
+                           @onkeydown="HandleSaveKeyDown" />
+                    <button class="btn-ghost btn-sm" @onclick="ConfirmSaveWheel"
+                            disabled="@(string.IsNullOrWhiteSpace(saveWheelName))">
+                        ✓
+                    </button>
+                    <button class="btn-ghost btn-sm" @onclick="CancelSave">
+                        ✕
+                    </button>
+                </div>
+            }
+
+            @if (linkCopied)
+            {
+                <div class="toast-copied mt-2"><small>@Translation.LinkCopied</small></div>
+            }
+            @if (wheelSaved)
+            {
+                <div class="toast-copied mt-2"><small>@Translation.WheelSaved</small></div>
+            }
+        }
+
+        @* Idle: spin button *@
+        @if (wheelState == WheelState.Idle)
+        {
+            <button @onclick="StartSpin" class="btn-glow w-100 mt-2">
+                @Translation.SpinWheelButton
+            </button>
+        }
+
+        @* Spinning: disabled button to preserve layout *@
+        @if (wheelState == WheelState.Spinning)
+        {
+            <button class="btn-glow w-100 mt-2" disabled>
+                @Translation.SpinWheelButton
+            </button>
+        }
+
+    </div>
+</div>
+
+@code {
+    private enum WheelState { Idle, Spinning, RoundComplete, AllComplete }
+
+    // Items and settings parsed from query string
+    private string[] originalItems = [];
+    private int originalCount;
+    private bool isSequential;
+
+    // Pre-computed spin (same for idle draw and animation — guarantees identical item order)
+    private SpinData? spinData;
+
+    // State machine
+    private WheelState wheelState = WheelState.Idle;
+
+    // Triggers drawIdle on next OnAfterRenderAsync
+    private bool needsIdleDraw;
+
+    // Double-click protection
+    private int _spinRunId;
+
+    // JS interop
+    private DotNetObjectReference<WheelPreview>? dotNetRef;
+
+    // Sequential mode state
+    private int currentRound;
+    private int totalRounds;
+    private bool lastRoundPending;
+    private List<string> revealedWinners = [];
+
+    // Party mode animation state
+    private bool winnerFocused;
+    private bool winnerShrinking;
+    private bool winnerSettling;
+    private System.Threading.Timer? winnerFocusTimer;
+
+    // UI toast state
+    private bool linkCopied;
+    private bool wheelSaved;
+    private bool showSaveInput;
+    private string saveWheelName = "";
+    private System.Threading.Timer? toastTimer;
+    private System.Threading.Timer? linkCopiedTimer;
+
+    protected override void OnInitialized()
+    {
+        CultureState.OnCultureChanged += OnCultureChanged;
+
+        var uri = Navigation.Uri;
+        var queryIndex = uri.IndexOf('?');
+        if (queryIndex < 0)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        var queryString = uri[(queryIndex + 1)..];
+        var pairs = queryString.Split('&', StringSplitOptions.RemoveEmptyEntries);
+        var itemsRaw = "";
+
+        foreach (var pair in pairs)
+        {
+            var parts = pair.Split('=', 2);
+            if (parts.Length != 2) continue;
+
+            var key = Uri.UnescapeDataString(parts[0]);
+            var value = Uri.UnescapeDataString(parts[1]);
+
+            if (key == "items") itemsRaw = value;
+            else if (key == "count" && int.TryParse(value, out var c)) originalCount = c;
+            else if (key == "seq" && value == "true") isSequential = true;
+        }
+
+        originalItems = itemsRaw
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToArray();
+
+        if (originalItems.Length < 2)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        // Clamp count to a valid range
+        originalCount = Math.Clamp(originalCount, 1, originalItems.Length);
+
+        // Sequential mode only applies when picking more than one item
+        isSequential = isSequential && originalCount > 1;
+        totalRounds = originalCount;
+
+        // Pre-compute so idle wheel and startSpin use the exact same _arrangeItems() order
+        spinData = WheelSpinner.Spin(originalItems, originalCount);
+        needsIdleDraw = true;
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    // ── Party mode ────────────────────────────────────────────────────────────
+
+    private async Task ToggleParty()
+    {
+        PartyState.SetEnabled(!PartyState.Enabled);
+        await JS.InvokeVoidAsync("PartyMode.saveState", PartyState.Enabled, PartyState.Intensity);
+        await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
+        if (PartyState.Enabled)
+            await JS.InvokeVoidAsync("PartyMode.initAudio");
+    }
+
+    private async Task ToggleMute()
+    {
+        PartyState.SetMuted(!PartyState.Muted);
+        await JS.InvokeVoidAsync("PartyMode.setMuted", PartyState.Muted);
+    }
+
+    private async Task SetPartyLevel(int level)
+    {
+        PartyState.SetIntensity(level);
+        await JS.InvokeVoidAsync("PartyMode.saveState", PartyState.Enabled, PartyState.Intensity);
+        await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
+    }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Only load from localStorage if the singleton doesn't already have state
+            // (SPA navigation preserves singleton; direct URL load doesn't)
+            if (!PartyState.Enabled)
+            {
+                var state = await JS.InvokeAsync<PartyStateDto>("PartyMode.loadState");
+                var reducedMotion = await JS.InvokeAsync<bool>("PartyMode.prefersReducedMotion");
+                PartyState.Load(state.Enabled, state.Intensity, reducedMotion);
+            }
+            await JS.InvokeVoidAsync("PartyMode.setBodyClass", PartyState.Enabled, PartyState.EffectiveIntensity);
+            StateHasChanged();
+        }
+
+        if (!needsIdleDraw || spinData is null) return;
+        needsIdleDraw = false;
+
+        if (isSequential && wheelState != WheelState.AllComplete)
+        {
+            var (roundItems, winnerIdx) = GetRoundData(currentRound);
+            await JS.InvokeVoidAsync("WheelCanvas.drawIdle", "wheelCanvas", roundItems, winnerIdx);
+        }
+        else if (wheelState != WheelState.AllComplete)
+        {
+            await JS.InvokeVoidAsync("WheelCanvas.drawIdle", "wheelCanvas", spinData.Items, spinData.SelectedIndices);
+        }
+    }
+
+    // ── Spin control ──────────────────────────────────────────────────────────
+
+    private async Task StartSpin()
+    {
+        if (wheelState != WheelState.Idle) return; // double-click guard
+
+        ++_spinRunId;
+        wheelState = WheelState.Spinning;
+        StateHasChanged();
+
+        var partyIntensity = PartyState.EffectiveIntensity;
+        if (partyIntensity > 0)
+        {
+            await JS.InvokeVoidAsync("PartyMode.initAudio");
+            await JS.InvokeVoidAsync("PartyMode.onSpinStart", partyIntensity);
+        }
+
+        dotNetRef?.Dispose();
+        dotNetRef = DotNetObjectReference.Create(this);
+
+        if (isSequential)
+        {
+            var (roundItems, winnerIdx) = GetRoundData(currentRound);
+            await JS.InvokeVoidAsync("WheelCanvas.startSpin", "wheelCanvas", roundItems, winnerIdx, dotNetRef);
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("WheelCanvas.startSpin",
+                "wheelCanvas", spinData!.Items, spinData.SelectedIndices, dotNetRef);
+        }
+    }
+
+    /// <summary>Called from JavaScript when the spin animation completes.</summary>
+    [JSInvokable]
+    public async void OnSpinComplete()
+    {
+        try
+        {
+            var partyIntensity = PartyState.EffectiveIntensity;
+            if (partyIntensity > 0)
+            {
+                await JS.InvokeVoidAsync("PartyMode.onSpinComplete", partyIntensity);
+
+                // Focus winner card (modal overlay) for 4 seconds, then shrink + settle
+                winnerFocused = true;
+                winnerFocusTimer?.Dispose();
+                winnerFocusTimer = new System.Threading.Timer(_ =>
+                {
+                    InvokeAsync(() =>
+                    {
+                        winnerFocused = false;
+                        winnerShrinking = true;
+                        StateHasChanged();
+
+                        Task.Delay(600).ContinueWith(_ => InvokeAsync(() =>
+                        {
+                            winnerShrinking = false;
+                            winnerSettling = true;
+                            StateHasChanged();
+
+                            Task.Delay(500).ContinueWith(_ => InvokeAsync(() =>
+                            {
+                                winnerSettling = false;
+                                if (lastRoundPending)
+                                {
+                                    // Auto-show final results after last-round modal fades
+                                    Task.Delay(1500).ContinueWith(_ => InvokeAsync(() =>
+                                    {
+                                        FinishLastRound();
+                                    }));
+                                }
+                                StateHasChanged();
+                            }));
+                        }));
+                    });
+                }, null, 4000, Timeout.Infinite);
+            }
+
+            if (isSequential)
+            {
+                var revealOrder = spinData!.RevealOrderIndices ?? spinData.SelectedIndices;
+                revealedWinners.Add(spinData.Items[revealOrder[currentRound]]);
+
+                if (currentRound + 1 >= totalRounds)
+                {
+                    // Last round — show winner card first, then transition to final results
+                    lastRoundPending = true;
+                    wheelState = WheelState.RoundComplete;
+
+                    if (partyIntensity == 0)
+                    {
+                        _ = Task.Delay(1500).ContinueWith(_ => InvokeAsync(FinishLastRound));
+                    }
+                }
+                else
+                {
+                    wheelState = WheelState.RoundComplete;
+                }
+
+                await InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                wheelState = WheelState.AllComplete;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Party] WheelPreview.OnSpinComplete error: {ex.Message}");
+            // Ensure the UI still progresses even if party effects fail
+            wheelState = WheelState.AllComplete;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // ── Round data helper (same logic as SpinResult.GetRoundData) ─────────────
+
+    private (string[] items, int[] winnerIndex) GetRoundData(int roundIndex)
+    {
+        var revealOrder = spinData!.RevealOrderIndices ?? spinData.SelectedIndices;
+
+        // Indices of winners already revealed in previous rounds
+        var revealedSet = new HashSet<int>();
+        for (int i = 0; i < roundIndex; i++)
+            revealedSet.Add(revealOrder[i]);
+
+        var roundItems = new List<string>();
+        int winnerOriginalIndex = revealOrder[roundIndex];
+        int winnerRoundIndex = -1;
+
+        for (int i = 0; i < spinData.Items.Length; i++)
+        {
+            if (revealedSet.Contains(i)) continue;
+            if (i == winnerOriginalIndex)
+                winnerRoundIndex = roundItems.Count;
+            roundItems.Add(spinData.Items[i]);
+        }
+
+        return (roundItems.ToArray(), [winnerRoundIndex]);
+    }
+
+    // ── Transitions ───────────────────────────────────────────────────────────
+
+    private void NextRound()
+    {
+        winnerFocused = false;
+        winnerShrinking = false;
+        winnerSettling = false;
+        winnerFocusTimer?.Dispose();
+        currentRound++;
+        wheelState = WheelState.Idle;
+        needsIdleDraw = true;
+        StateHasChanged();
+    }
+
+    private void FinishLastRound()
+    {
+        winnerFocused = false;
+        winnerShrinking = false;
+        winnerSettling = false;
+        winnerFocusTimer?.Dispose();
+        lastRoundPending = false;
+        wheelState = WheelState.AllComplete;
+        StateHasChanged();
+    }
+
+    private void SpinAgain()
+    {
+        spinData = WheelSpinner.Spin(originalItems, originalCount);
+        wheelState = WheelState.Idle;
+        needsIdleDraw = true;
+        linkCopied = false;
+        dotNetRef?.Dispose();
+        dotNetRef = null;
+        StateHasChanged();
+    }
+
+    private void ResetWheel()
+    {
+        spinData = WheelSpinner.Spin(originalItems, originalCount);
+        currentRound = 0;
+        revealedWinners.Clear();
+        lastRoundPending = false;
+        winnerFocused = false;
+        winnerShrinking = false;
+        winnerSettling = false;
+        winnerFocusTimer?.Dispose();
+        wheelState = WheelState.Idle;
+        needsIdleDraw = true;
+        linkCopied = false;
+        dotNetRef?.Dispose();
+        dotNetRef = null;
+        StateHasChanged();
+    }
+
+    // ── Action buttons ────────────────────────────────────────────────────────
+
+    private async Task CopyLink()
+    {
+        if (spinData is null) return;
+
+        var encoded = SpinEncoder.Encode(spinData);
+        var seqParam = isSequential ? "?seq=true" : "";
+        var baseUri = Navigation.BaseUri.TrimEnd('/');
+        var url = $"{baseUri}/spin/{encoded}{seqParam}";
+
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", url);
+
+        linkCopied = true;
+        linkCopiedTimer?.Dispose();
+        linkCopiedTimer = new System.Threading.Timer(_ =>
+        {
+            linkCopied = false;
+            InvokeAsync(StateHasChanged);
+        }, null, 2000, Timeout.Infinite);
+        StateHasChanged();
+    }
+
+    private void EditItems()
+    {
+        var escapedItems = Uri.EscapeDataString(string.Join("\n", originalItems));
+        var seqParam = isSequential ? "&seq=true" : "";
+        Navigation.NavigateTo($"/?items={escapedItems}&count={originalCount}{seqParam}");
+    }
+
+    private void BeginSave()
+    {
+        showSaveInput = true;
+        saveWheelName = "";
+    }
+
+    private void CancelSave()
+    {
+        showSaveInput = false;
+        saveWheelName = "";
+    }
+
+    private async Task HandleSaveKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await ConfirmSaveWheel();
+        else if (e.Key == "Escape")
+            CancelSave();
+    }
+
+    private async Task ConfirmSaveWheel()
+    {
+        if (string.IsNullOrWhiteSpace(saveWheelName)) return;
+
+        var wheel = new SavedWheel
+        {
+            Name = saveWheelName.Trim(),
+            Items = originalItems,
+            PickCount = originalCount
+        };
+
+        await SavedWheelService.SaveAsync(wheel);
+
+        showSaveInput = false;
+        saveWheelName = "";
+        wheelSaved = true;
+        StateHasChanged();
+
+        toastTimer?.Dispose();
+        toastTimer = new System.Threading.Timer(_ =>
+        {
+            wheelSaved = false;
+            InvokeAsync(StateHasChanged);
+        }, null, 2000, Timeout.Infinite);
+    }
+
+    // ── Dispose ───────────────────────────────────────────────────────────────
+
+    public void Dispose()
+    {
+        CultureState.OnCultureChanged -= OnCultureChanged;
+        dotNetRef?.Dispose();
+        winnerFocusTimer?.Dispose();
+        toastTimer?.Dispose();
+        linkCopiedTimer?.Dispose();
+        _ = JS.InvokeVoidAsync("PartyMode.dispose");
+    }
+
+    private record PartyStateDto(bool Enabled, int Intensity);
+}

@@ -164,10 +164,10 @@
                 </div>
             }
 
-            <button @onclick="DoSpin"
+            <button @onclick="ShowWheel"
                     class="btn-glow w-100"
                     disabled="@(!CanSpin)">
-                @Translation.SpinButton
+                @Translation.ShowWheelButton
             </button>
 
             @if (CanSpin && !showSaveInput)
@@ -376,7 +376,7 @@
                             && count <= ParsedItems.Length
                             && (Duplicates.Count == 0 || allowDuplicates);
 
-    private void DoSpin()
+    private void ShowWheel()
     {
         errorMessage = null;
         var items = ParsedItems;
@@ -400,10 +400,9 @@
             return;
         }
 
-        var result = WheelSpinner.Spin(items, count);
-        var encoded = SpinEncoder.Encode(result);
-        var url = oneAtATime ? $"/spin/{encoded}?seq=true" : $"/spin/{encoded}";
-        Navigation.NavigateTo(url);
+        var escapedItems = Uri.EscapeDataString(string.Join("\n", items));
+        var seqParam = count > 1 && oneAtATime ? "&seq=true" : "";
+        Navigation.NavigateTo($"/wheel?items={escapedItems}&count={count}{seqParam}");
     }
 
     private void BeginSave()

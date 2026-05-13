@@ -32,12 +32,14 @@ public static class Translation
     public static string ErrorPickCount => GetString(nameof(ErrorPickCount));
     public static string ErrorDuplicates => GetString(nameof(ErrorDuplicates));
     public static string SpinButton => GetString(nameof(SpinButton));
+    public static string ShowWheelButton => GetString(nameof(ShowWheelButton));
     public static string ItemsEntered => GetString(nameof(ItemsEntered));
     public static string OneAtATime => GetString(nameof(OneAtATime));
     public static string AllowDuplicates => GetString(nameof(AllowDuplicates));
 
-    // SpinResult page
+    // SpinResult page / WheelPreview page
     public static string PageTitleResult => GetString(nameof(PageTitleResult));
+    public static string PageTitleWheel => GetString(nameof(PageTitleWheel));
     public static string InvalidLink => GetString(nameof(InvalidLink));
     public static string LinkCorrupt => GetString(nameof(LinkCorrupt));
     public static string CreateNewSpin => GetString(nameof(CreateNewSpin));
@@ -53,6 +55,10 @@ public static class Translation
     public static string EditItemsButton => GetString(nameof(EditItemsButton));
     public static string NewSpinButton => GetString(nameof(NewSpinButton));
     public static string LinkCopied => GetString(nameof(LinkCopied));
+    public static string SpinWheelButton => GetString(nameof(SpinWheelButton));
+    public static string SpinAgainWheelButton => GetString(nameof(SpinAgainWheelButton));
+    public static string ResetWheelButton => GetString(nameof(ResetWheelButton));
+    public static string AllSelectedLabel => GetString(nameof(AllSelectedLabel));
 
     // Saved wheels
     public static string MyWheels => GetString(nameof(MyWheels));

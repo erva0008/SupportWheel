@@ -58,6 +58,9 @@
   <data name="PageTitleResult" xml:space="preserve">
     <value>Resultat</value>
   </data>
+  <data name="PageTitleWheel" xml:space="preserve">
+    <value>Hjulet</value>
+  </data>
   <data name="AddYourItems" xml:space="preserve">
     <value>Lägg till alternativ</value>
   </data>
@@ -92,6 +95,9 @@ Bowling</value>
   </data>
   <data name="SpinButton" xml:space="preserve">
     <value>🎰 Snurra!</value>
+  </data>
+  <data name="ShowWheelButton" xml:space="preserve">
+    <value>🎡 Visa hjulet</value>
   </data>
   <data name="ItemsEntered" xml:space="preserve">
     <value>{0} alternativ</value>
@@ -143,6 +149,18 @@ Bowling</value>
   </data>
   <data name="LinkCopied" xml:space="preserve">
     <value>Länk kopierad!</value>
+  </data>
+  <data name="SpinWheelButton" xml:space="preserve">
+    <value>🎰 Snurra hjulet!</value>
+  </data>
+  <data name="SpinAgainWheelButton" xml:space="preserve">
+    <value>🔄 Snurra igen!</value>
+  </data>
+  <data name="ResetWheelButton" xml:space="preserve">
+    <value>🔁 Börja om</value>
+  </data>
+  <data name="AllSelectedLabel" xml:space="preserve">
+    <value>🎉 Alla valda!</value>
   </data>
   <data name="SwitchToEnglish" xml:space="preserve">
     <value>English</value>
