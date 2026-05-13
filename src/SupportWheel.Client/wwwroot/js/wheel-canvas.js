@@ -777,14 +777,7 @@ window.WheelCanvas = {
 
         const arranged = this._arrangeItems(items, selectedIndices);
         const displayItems = arranged.displayItems;
-        const winnerDisplayIndices = arranged.winnerDisplayIndices;
         const originalIndices = arranged.originalIndices;
-
-        // Pointer angles — one per winner, same formula as startSpin
-        const pointerAngles = [];
-        for (let j = 0; j < K; j++) {
-            pointerAngles.push(-Math.PI / 2 + winnerDisplayIndices[j] * segmentAngle);
-        }
 
         const baseColors = this._generateColors(N);
         const colors = originalIndices.map(oi => baseColors[oi]);
@@ -792,43 +785,5 @@ window.WheelCanvas = {
         // Render static frame at rotation=0
         ctx.clearRect(0, 0, size, size);
         WheelCanvas._renderFrame(ctx, size, center, radius, segmentAngle, N, displayItems, colors, 0, outerRingWidth);
-
-        // Draw non-glowing pointers (same geometry as startSpin's drawPointers(false))
-        var pointerLen = 20;
-        var halfBase = 10;
-        for (let j = 0; j < K; j++) {
-            var angle = pointerAngles[j];
-            var tipR = radius - 4;
-            var baseR = radius + outerRingWidth + pointerLen;
-            var tipX = center + tipR * Math.cos(angle);
-            var tipY = center + tipR * Math.sin(angle);
-            var perpX = -Math.sin(angle);
-            var perpY = Math.cos(angle);
-            var baseX = center + baseR * Math.cos(angle);
-            var baseY = center + baseR * Math.sin(angle);
-
-            ctx.save();
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 8;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
-
-            ctx.beginPath();
-            ctx.moveTo(tipX, tipY);
-            ctx.lineTo(baseX + halfBase * perpX, baseY + halfBase * perpY);
-            ctx.lineTo(baseX - halfBase * perpX, baseY - halfBase * perpY);
-            ctx.closePath();
-
-            var ptrGrad = ctx.createLinearGradient(baseX, baseY, tipX, tipY);
-            ptrGrad.addColorStop(0, '#2c2c3a');
-            ptrGrad.addColorStop(1, '#4a4a5a');
-            ctx.fillStyle = ptrGrad;
-            ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-            ctx.lineWidth = 1.5;
-
-            ctx.fill();
-            ctx.stroke();
-            ctx.restore();
-        }
     }
 };
