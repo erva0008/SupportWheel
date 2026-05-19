@@ -311,8 +311,10 @@ window.WheelCanvas = {
      * @param {string[]} items - All items on the wheel
      * @param {number[]} selectedIndices - Indices of selected items (into items[])
      * @param {object} dotNetRef - DotNet object reference for callback
+     * @param {number} [totalCount] - Total item count from the original full list (for stable colors across rounds)
+     * @param {number[]} [colorIndices] - Maps each round-list index to its stable full-list color index
      */
-    startSpin: function (canvasId, items, selectedIndices, dotNetRef) {
+    startSpin: function (canvasId, items, selectedIndices, dotNetRef, totalCount, colorIndices) {
         this._cancelPending();
 
         const canvas = document.getElementById(canvasId);
@@ -333,7 +335,8 @@ window.WheelCanvas = {
         const displayItems = arranged.displayItems;
         const winnerDisplayIndices = arranged.winnerDisplayIndices;
         const winnerDisplaySet = new Set(winnerDisplayIndices);
-        const originalIndices = arranged.originalIndices;
+        // displayToRoundIndex[displayPos] = round-list index of the item at that display position
+        const displayToRoundIndex = arranged.originalIndices;
 
         // Pointer angles — aligned to the actual winner segment center positions.
         // Winners sit at display indices winnerDisplayIndices[j], so each pointer
@@ -353,8 +356,12 @@ window.WheelCanvas = {
         const extraRotations = 5 + Math.floor(Math.random() * 4);
         const totalRotation = finalAlignRotation + extraRotations * 2 * Math.PI;
 
-        const baseColors = this._generateColors(N);
-        const colors = originalIndices.map(oi => baseColors[oi]);
+        // Use full original count so colors are stable across rounds in sequential mode
+        const effectiveTotal = totalCount != null ? totalCount : N;
+        const effectiveColorIndices = colorIndices != null ? colorIndices : items.map((_, i) => i);
+        const baseColors = this._generateColors(effectiveTotal);
+        // displayToRoundIndex[displayPos] is the round-list index; effectiveColorIndices maps that to the stable full-list color index
+        const colors = displayToRoundIndex.map(ri => baseColors[effectiveColorIndices[ri]]);
 
         const duration = 5000;
         let startTime = null;
@@ -751,11 +758,13 @@ window.WheelCanvas = {
      * Draw the wheel statically at rotation=0 with no animation.
      * Cancels any pending animation before drawing.
      *
-     * @param {string} canvasId       - The canvas element ID
-     * @param {string[]} items        - All items on the wheel
+     * @param {string} canvasId          - The canvas element ID
+     * @param {string[]} items           - All items on the wheel
      * @param {number[]} selectedIndices - Indices of the "selected" items (determines pointer placement)
+     * @param {number} [totalCount]      - Total item count from the original full list (for stable colors across rounds)
+     * @param {number[]} [colorIndices]  - Maps each round-list index to its stable full-list color index
      */
-    drawIdle: function (canvasId, items, selectedIndices) {
+    drawIdle: function (canvasId, items, selectedIndices, totalCount, colorIndices) {
         this._cancelPending();
 
         const canvas = document.getElementById(canvasId);
@@ -769,10 +778,14 @@ window.WheelCanvas = {
         const N = items.length;
         const segmentAngle = (2 * Math.PI) / N;
 
-        const baseColors = this._generateColors(N);
+        // Use full original count so colors are stable across rounds in sequential mode
+        const effectiveTotal = totalCount != null ? totalCount : N;
+        const effectiveColorIndices = colorIndices != null ? colorIndices : items.map((_, i) => i);
+        const baseColors = this._generateColors(effectiveTotal);
+        const colors = effectiveColorIndices.map(ci => baseColors[ci]);
 
         // Render static frame at rotation=0
         ctx.clearRect(0, 0, size, size);
-        WheelCanvas._renderFrame(ctx, size, center, radius, segmentAngle, N, items, baseColors, 0, outerRingWidth);
+        WheelCanvas._renderFrame(ctx, size, center, radius, segmentAngle, N, items, colors, 0, outerRingWidth);
     }
 };

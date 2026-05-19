@@ -327,8 +327,8 @@
 
         if (isSequential && wheelState != WheelState.AllComplete)
         {
-            var (roundItems, winnerIdx) = GetRoundData(currentRound);
-            await JS.InvokeVoidAsync("WheelCanvas.drawIdle", "wheelCanvas", roundItems, winnerIdx);
+            var (roundItems, winnerIdx, colorIndices) = GetRoundData(currentRound);
+            await JS.InvokeVoidAsync("WheelCanvas.drawIdle", "wheelCanvas", roundItems, winnerIdx, spinData!.Items.Length, colorIndices);
         }
         else if (wheelState != WheelState.AllComplete)
         {
@@ -358,8 +358,8 @@
 
         if (isSequential)
         {
-            var (roundItems, winnerIdx) = GetRoundData(currentRound);
-            await JS.InvokeVoidAsync("WheelCanvas.startSpin", "wheelCanvas", roundItems, winnerIdx, dotNetRef);
+            var (roundItems, winnerIdx, colorIndices) = GetRoundData(currentRound);
+            await JS.InvokeVoidAsync("WheelCanvas.startSpin", "wheelCanvas", roundItems, winnerIdx, dotNetRef, spinData!.Items.Length, colorIndices);
         }
         else
         {
@@ -454,7 +454,7 @@
 
     // ── Round data helper (same logic as SpinResult.GetRoundData) ─────────────
 
-    private (string[] items, int[] winnerIndex) GetRoundData(int roundIndex)
+    private (string[] items, int[] winnerIndex, int[] colorIndices) GetRoundData(int roundIndex)
     {
         var revealOrder = spinData!.RevealOrderIndices ?? spinData.SelectedIndices;
 
@@ -464,6 +464,7 @@
             revealedSet.Add(revealOrder[i]);
 
         var roundItems = new List<string>();
+        var colorIndices = new List<int>();
         int winnerOriginalIndex = revealOrder[roundIndex];
         int winnerRoundIndex = -1;
 
@@ -473,9 +474,10 @@
             if (i == winnerOriginalIndex)
                 winnerRoundIndex = roundItems.Count;
             roundItems.Add(spinData.Items[i]);
+            colorIndices.Add(i); // i = item's stable position in the full original list
         }
 
-        return (roundItems.ToArray(), [winnerRoundIndex]);
+        return (roundItems.ToArray(), [winnerRoundIndex], colorIndices.ToArray());
     }
 
     // ── Transitions ───────────────────────────────────────────────────────────

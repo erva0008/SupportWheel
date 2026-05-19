@@ -300,9 +300,9 @@ else
         if (isSequential)
         {
             roundInProgress = true;
-            var (roundItems, winnerIdx) = GetRoundData(currentRound);
+            var (roundItems, winnerIdx, colorIndices) = GetRoundData(currentRound);
             await JS.InvokeVoidAsync("WheelCanvas.startSpin",
-                "wheelCanvas", roundItems, winnerIdx, dotNetRef);
+                "wheelCanvas", roundItems, winnerIdx, dotNetRef, spinData!.Items.Length, colorIndices);
         }
         else
         {
@@ -311,7 +311,7 @@ else
         }
     }
 
-    private (string[] items, int[] winnerIndex) GetRoundData(int roundIndex)
+    private (string[] items, int[] winnerIndex, int[] colorIndices) GetRoundData(int roundIndex)
     {
         var revealOrder = spinData!.RevealOrderIndices ?? spinData.SelectedIndices;
 
@@ -321,6 +321,7 @@ else
             revealedSet.Add(revealOrder[i]);
 
         var roundItems = new List<string>();
+        var colorIndices = new List<int>();
         int winnerOriginalIndex = revealOrder[roundIndex];
         int winnerRoundIndex = -1;
 
@@ -330,9 +331,10 @@ else
             if (i == winnerOriginalIndex)
                 winnerRoundIndex = roundItems.Count;
             roundItems.Add(spinData.Items[i]);
+            colorIndices.Add(i); // i = item's stable position in the full original list
         }
 
-        return (roundItems.ToArray(), [winnerRoundIndex]);
+        return (roundItems.ToArray(), [winnerRoundIndex], colorIndices.ToArray());
     }
 
     /// <summary>
